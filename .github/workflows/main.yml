@@ -2,16 +2,16 @@ name: Run Finnpanel Scraper
 
 on:
   schedule:
-    - cron: '0 8,20 * * *'  # Runs at 8:00 AM and 8:00 PM UTC daily
-  workflow_dispatch:  # Allows manual trigger
+    - cron: '0 8,20 * * *'  # Ajaa klo 8:00 ja 20:00 UTC päivittäin
+  workflow_dispatch:  # Sallii manuaalisen käynnistyksen
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3  # Päivitetty v2:sta v3:een
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4  # Päivitetty v2:sta v4:ään
       with:
         python-version: '3.x'
     - name: Install dependencies
