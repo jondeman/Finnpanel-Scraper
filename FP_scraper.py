@@ -4,10 +4,11 @@ from datetime import datetime
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
-# Airtable configuration
-AIRTABLE_API_KEY = 'patj8UX1EgnGE8UQV.d1928de4668967c5ec6e5a8a60b79275126f6a9e37280fd8775c0516c83218c6'
-AIRTABLE_BASE_ID = 'appnIDmJ3VDtptSkK'
-AIRTABLE_TABLE_NAME = 'Finnpanel Views'
+import os
+
+AIRTABLE_API_KEY = os.environ['AIRTABLE_API_KEY']
+AIRTABLE_BASE_ID = os.environ['AIRTABLE_BASE_ID']
+AIRTABLE_TABLE_NAME = os.environ['AIRTABLE_TABLE_NAME']
 
 # URLs to scrape
 URLS = {
