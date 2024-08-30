@@ -2,7 +2,7 @@ name: Finnpanel Scraper
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Runs at 00:00 UTC every day
+    - cron: '0 8 * * *'  # Runs at 08:00 UTC every day
   workflow_dispatch:  # Allows manual triggering
 
 jobs:
@@ -23,4 +23,6 @@ jobs:
     - name: Run scraper
       env:
         GT_TOKEN: ${{ secrets.GT_TOKEN }}
-      run: python -u FPGH.py
+      run: |
+        echo "GT_TOKEN is set: ${{ secrets.GT_TOKEN != '' }}"
+        python -u FPGH.py
