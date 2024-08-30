@@ -72,11 +72,11 @@ def upload_to_github(df, filename, repo_name, github_token):
         print(f"File {filename} created successfully")
 
 # GitHub configuration
-GITHUB_TOKEN = os.environ.get('GITHUB_TOKEN')
+GT_TOKEN = os.environ.get('GT_TOKEN')
 GITHUB_REPO = 'Finnpanel-Scraper'  # Ensure this matches your actual repository name
 
-if not GITHUB_TOKEN:
-    raise ValueError("GITHUB_TOKEN environment variable is not set")
+if not GT_TOKEN:
+    raise ValueError("GT_TOKEN environment variable is not set")
 
 urls = [
     'https://www.finnpanel.fi/tulokset/totaltv/mtv/online14/3plus.html',
@@ -110,7 +110,7 @@ if all_data:
     
     # Upload to GitHub
     filename = f'finnpanel_data_{current_date}.xlsx'
-    upload_to_github(df, filename, GITHUB_REPO, GITHUB_TOKEN)
+    upload_to_github(df, filename, GITHUB_REPO, GT_TOKEN)
     print(f"Data has been scraped on {current_date} and uploaded to GitHub")
 else:
     print("No data was scraped. Please check the URLs and website structure.")
