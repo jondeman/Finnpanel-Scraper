@@ -1,4 +1,4 @@
-ame: Finnpanel Scraper
+name: Finnpanel Scraper
 
 on:
   schedule:
@@ -20,5 +20,5 @@ jobs:
         pip install -r requirements.txt
     - name: Run scraper
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GT_TOKEN: ${{ secrets.GT_TOKEN }}
       run: python FPGH.py
