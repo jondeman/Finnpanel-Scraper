@@ -89,6 +89,27 @@ def upload_to_github(df, filename, repo_name, github_token):
         logging.error(f"Error uploading to GitHub: {str(e)}")
         raise
 
+def process_data(urls, period):
+    all_data = []
+    for url in urls:
+        all_data.extend(scrape_finnpanel(url))
+    
+    if all_data:
+        df = pd.DataFrame(all_data)
+        df = df.sort_values('Viewers', ascending=False).reset_index(drop=True)
+        df['Rank'] = df.index + 1
+        df['Date'] = datetime.now().strftime('%Y-%m-%d')
+        df = df[['Date', 'Rank', 'Service', 'Program', 'Episode', 'Duration', 'Viewers']]
+        
+        logging.info(f"Total scraped records for {period} period: {len(df)}")
+        logging.info("Sample data:")
+        logging.info(df.head().to_string())
+        
+        return df
+    else:
+        logging.warning(f"No data was scraped for {period} period. Please check the URLs and website structure.")
+        return None
+
 # Main execution
 try:
     logging.info("Starting Finnpanel scraper")
@@ -98,34 +119,36 @@ try:
     if not GT_TOKEN:
         raise ValueError("GT_TOKEN environment variable is not set")
 
-    urls = [
+    urls_14d = [
         'https://www.finnpanel.fi/tulokset/totaltv/mtv/online14/3plus.html',
         'https://www.finnpanel.fi/tulokset/totaltv/sanoma/online14/3plus.html',
         'https://www.finnpanel.fi/tulokset/totaltv/yle/online14/3plus.html'
     ]
 
+    urls_90d = [
+        'https://www.finnpanel.fi/tulokset/totaltv/yle/online90/3plus.html',
+        'https://www.finnpanel.fi/tulokset/totaltv/mtv/online90/3plus.html',
+        'https://www.finnpanel.fi/tulokset/totaltv/sanoma/online90/3plus.html'
+    ]
+
     current_date = datetime.now().strftime('%Y-%m-%d')
-    all_data = []
 
-    for url in urls:
-        all_data.extend(scrape_finnpanel(url))
+    # Process 14-day data
+    df_14d = process_data(urls_14d, "14-day")
+    if df_14d is not None:
+        filename_14d = f'14D_Finnpanel_data_{current_date}.xlsx'
+        upload_to_github(df_14d, filename_14d, GITHUB_REPO, GT_TOKEN)
+        logging.info(f"14-day data has been scraped on {current_date} and uploaded to GitHub")
 
-    if all_data:
-        df = pd.DataFrame(all_data)
-        df = df.sort_values('Viewers', ascending=False).reset_index(drop=True)
-        df['Rank'] = df.index + 1
-        df['Date'] = current_date
-        df = df[['Date', 'Rank', 'Service', 'Program', 'Episode', 'Duration', 'Viewers']]
-        
-        logging.info(f"Total scraped records: {len(df)}")
-        logging.info("Sample data:")
-        logging.info(df.head().to_string())
-        
-        filename = f'finnpanel_data_{current_date}.xlsx'
-        upload_to_github(df, filename, GITHUB_REPO, GT_TOKEN)
-        logging.info(f"Data has been scraped on {current_date} and uploaded to GitHub")
-    else:
-        logging.warning("No data was scraped. Please check the URLs and website structure.")
+    # Process 90-day data
+    df_90d = process_data(urls_90d, "90-day")
+    if df_90d is not None:
+        filename_90d = f'90D_Finnpanel_data_{current_date}.xlsx'
+        upload_to_github(df_90d, filename_90d, GITHUB_REPO, GT_TOKEN)
+        logging.info(f"90-day data has been scraped on {current_date} and uploaded to GitHub")
+
+    if df_14d is None and df_90d is None:
+        logging.error("No data was scraped for either period. Exiting with error.")
         sys.exit(1)
 
 except Exception as e:
