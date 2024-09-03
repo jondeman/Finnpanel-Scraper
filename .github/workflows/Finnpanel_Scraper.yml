@@ -1,28 +1,54 @@
-name: Finnpanel Scraper
+name: Update Finnpanel Data
 
 on:
   schedule:
-    - cron: '0 8 * * *'  # Runs at 08:00 UTC every day
-  workflow_dispatch:  # Allows manual triggering
+    - cron: '0 1 * * *'  # Suoritetaan joka päivä klo 01:00 UTC
+  workflow_dispatch:  # Mahdollistaa manuaalisen käynnistyksen
 
 jobs:
-  scrape-and-upload:
+  update-data:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v2
+
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v2
       with:
-        python-version: '3.9'
-    - name: Display FPGH.py contents
-      run: cat FPGH.py
+        python-version: '3.x'
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install --no-cache-dir -r requirements.txt
-    - name: Run scraper
+        pip install requests beautifulsoup4 pandas openpyxl
+
+    - name: Run Finnpanel scraper for 14 days
+      run: python finnpanel_scraper.py --period 14
       env:
         GT_TOKEN: ${{ secrets.GT_TOKEN }}
+
+    - name: Run Finnpanel scraper for 90 days
+      run: python finnpanel_scraper.py --period 90
+      env:
+        GT_TOKEN: ${{ secrets.GT_TOKEN }}
+
+    - name: Commit and push if there are changes
       run: |
-        echo "GT_TOKEN is set: ${{ secrets.GT_TOKEN != '' }}"
-        python -u FPGH.py
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update Finnpanel data (14 and 90 days)" && git push)
+
+    - name: Update README
+      run: |
+        echo "# Finnpanel Data" > README.md
+        echo "" >> README.md
+        echo "Viimeisin päivitys: $(date)" >> README.md
+        echo "" >> README.md
+        echo "## Saatavilla olevat tiedostot" >> README.md
+        echo "- 14D_Finnpanel_data_$(date +%Y-%m-%d).csv" >> README.md
+        echo "- 90D_Finnpanel_data_$(date +%Y-%m-%d).csv" >> README.md
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add README.md
+        git commit -m "Update README" || echo "No changes to commit"
+        git push origin || echo "No changes to push"
