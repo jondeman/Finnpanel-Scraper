@@ -22,12 +22,12 @@ jobs:
         pip install requests beautifulsoup4 pandas openpyxl
 
     - name: Run Finnpanel scraper for 14 days
-      run: python finnpanel_scraper.py --period 14
+      run: python FPGH.py --period 14
       env:
         GT_TOKEN: ${{ secrets.GT_TOKEN }}
 
     - name: Run Finnpanel scraper for 90 days
-      run: python finnpanel_scraper.py --period 90
+      run: python FPGH.py --period 90
       env:
         GT_TOKEN: ${{ secrets.GT_TOKEN }}
 
