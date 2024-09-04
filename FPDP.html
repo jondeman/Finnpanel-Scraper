@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finnpanel Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .controls { margin-bottom: 20px; }
+        select, button, input { margin-right: 10px; padding: 5px; }
+        #loading { display: none; margin-bottom: 10px; }
+        #timeframe { font-weight: bold; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Finnpanel Dashboard</h1>
+    
+    <div id="timeframe"></div>
+    
+    <div class="controls">
+        <input type="date" id="dateSelect">
+        <select id="dataRange">
+            <option value="14D">14 Days</option>
+            <option value="90D">90 Days</option>
+        </select>
+        <select id="service">
+            <option value="all">All Services</option>
+            <option value="Ruutu">Ruutu</option>
+            <option value="MTV Katsomo">MTV Katsomo</option>
+            <option value="Yle Areena">Yle Areena</option>
+        </select>
+        <button onclick="downloadXLSX()">Download Data</button>
+    </div>
+
+    <div id="loading">Loading data...</div>
+
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Rank</th>
+                <th>Service</th>
+                <th>Program</th>
+                <th>Duration</th>
+                <th>Viewers</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+
+    <script>
+        let allData = [];
+        const baseUrl = 'https://raw.githubusercontent.com/jondeman/Finnpanel-Scraper/main/';
+
+        // Set default date to yesterday
+        const yesterday = new Date(new Date().setDate(new Date().getDate() - 1));
+        document.getElementById('dateSelect').value = yesterday.toISOString().split('T')[0];
+
+        function formatDate(date) {
+            const d = new Date(date);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getStartDate(endDate, days) {
+            const start = new Date(endDate);
+            start.setDate(start.getDate() - days + 1); // +1 because the end date is inclusive
+            return start;
+        }
+
+        function updateTimeframeDisplay() {
+            const endDate = new Date(document.getElementById('dateSelect').value);
+            const days = document.getElementById('dataRange').value === '14D' ? 14 : 90;
+            const startDate = getStartDate(endDate, days);
+            
+            const timeframeElement = document.getElementById('timeframe');
+            timeframeElement.textContent = `Timeframe: ${formatDate(startDate)} - ${formatDate(endDate)}`;
+        }
+
+        async function fetchData() {
+            updateTimeframeDisplay();
+            document.getElementById('loading').style.display = 'block';
+            allData = [];
+            const selectedDate = document.getElementById('dateSelect').value;
+            const dataRange = document.getElementById('dataRange').value;
+            const formattedDate = formatDate(selectedDate);
+            const url = `${baseUrl}${dataRange}_Finnpanel_data_${formattedDate}.xlsx`;
+            
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    const arrayBuffer = await response.arrayBuffer();
+                    const data = new Uint8Array(arrayBuffer);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                    
+                    // Assuming the first row is headers
+                    const headers = jsonData[0];
+                    const rows = jsonData.slice(1);
+                    
+                    allData = rows.map(row => {
+                        let obj = {};
+                        headers.forEach((header, index) => {
+                            obj[header] = row[index];
+                        });
+                        return obj;
+                    });
+                    updateTable();
+                } else {
+                    console.error(`No data available for ${formattedDate}`);
+                    alert(`No data available for ${formattedDate}`);
+                }
+            } catch (error) {
+                console.error(`Failed to fetch data for ${formattedDate}:`, error);
+                alert(`Failed to fetch data for ${formattedDate}`);
+            }
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function updateTable() {
+            const service = document.getElementById('service').value;
+            
+            let filteredData = allData;
+            if (service !== 'all') {
+                filteredData = filteredData.filter(row => row.Service === service);
+            }
+
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            filteredData.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.Date || ''}</td>
+                    <td>${row.Rank || ''}</td>
+                    <td>${row.Service || ''}</td>
+                    <td>${row.Program || ''}</td>
+                    <td>${row.Duration || ''}</td>
+                    <td>${(row.Viewers ? parseInt(row.Viewers).toLocaleString() : '')}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('service').addEventListener('change', updateTable);
+        document.getElementById('dateSelect').addEventListener('change', fetchData);
+        document.getElementById('dataRange').addEventListener('change', fetchData);
+
+        function downloadXLSX() {
+            if (allData.length === 0) {
+                alert('No data to download. Please wait for data to load.');
+                return;
+            }
+            const worksheet = XLSX.utils.json_to_sheet(allData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Finnpanel Data");
+            const selectedDate = document.getElementById('dateSelect').value;
+            const dataRange = document.getElementById('dataRange').value;
+            XLSX.writeFile(workbook, `${dataRange}_Finnpanel_data_${formatDate(selectedDate)}.xlsx`);
+        }
+
+        // Initial load
+        fetchData();
+    </script>
+</body>
+</html>
