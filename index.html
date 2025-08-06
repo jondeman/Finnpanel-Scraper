@@ -6,19 +6,126 @@
     <title>Finnpanel Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .controls { margin-bottom: 20px; }
-        select, button, input { margin-right: 10px; padding: 5px; }
-        #loading { display: none; margin-bottom: 10px; }
-        #timeframe { font-weight: bold; margin-bottom: 10px; }
+        :root {
+            --main-blue: #2563eb;
+            --accent-grey: #23272f;
+            --accent-blue: #e0e7ff;
+            --white: #fff;
+            --border-grey: #e5e7eb;
+        }
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #f8fafc;
+            color: var(--accent-grey);
+        }
+        h1 {
+            font-size: 2.2rem;
+            color: var(--main-blue);
+            margin-bottom: 0.1em;
+            margin-top: 0.4em;
+        }
+        .subtitle {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--accent-grey);
+            background: var(--accent-blue);
+            display: inline-block;
+            border-radius: 7px;
+            padding: 4px 14px 3px 10px;
+            margin-bottom: 1.1em;
+            margin-left: 2px;
+        }
+        .controls { 
+            margin-bottom: 20px; 
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px #0001;
+            padding: 14px 12px 10px 12px;
+        }
+        select, button, input[type="date"] { 
+            margin-right: 10px; 
+            padding: 7px 12px;
+            border-radius: 5px;
+            border: 1px solid var(--border-grey);
+            background: var(--white);
+            font-size: 1rem;
+            color: var(--accent-grey);
+        }
+        button {
+            background: var(--main-blue);
+            color: var(--white);
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        #loading { 
+            display: none; 
+            margin-bottom: 10px; 
+            color: var(--main-blue);
+        }
+        #timeframe { 
+            font-weight: bold; 
+            margin-bottom: 10px; 
+            color: var(--accent-grey);
+        }
+        table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            background: var(--white);
+            border-radius: 10px;
+            box-shadow: 0 1px 7px #0001;
+            overflow: hidden;
+        }
+        th, td { 
+            border: 1px solid var(--border-grey); 
+            padding: 9px 8px; 
+            text-align: left; 
+        }
+        th { 
+            background-color: var(--accent-blue); 
+            color: var(--accent-grey); 
+            font-weight: bold;
+        }
+        tr:nth-child(even) { 
+            background-color: #f3f7fb; 
+        }
+        tr:hover td {
+            background: #f1f5ff;
+            transition: background 0.15s;
+        }
+        /* Footer styles */
+        footer {
+            margin-top: 36px;
+            padding: 17px 0 8px 0;
+            text-align: center;
+            font-size: 0.99rem;
+            color: #777;
+        }
+        .footer-link {
+            color: var(--main-blue);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--main-blue);
+            transition: color 0.2s;
+        }
+        .footer-link:hover {
+            color: #111;
+        }
+        @media (max-width: 650px) {
+            h1 { font-size: 1.3rem; }
+            .subtitle { font-size: 0.98rem; }
+            th, td { font-size: 0.94rem; }
+            .controls { font-size: 0.97rem; }
+        }
     </style>
 </head>
 <body>
-    <h1>Finnpanel Dashboard: Yle Areenan, MTV Katsomon ja Ruudun katsotuimmat ohjelmat </h1>
-    
+    <h1>Finnpanel Dashboard</h1>
+    <div class="subtitle">Yle Areenan, MTV Katsomon ja Ruudun katsotuimmat ohjelmat</div>
     <div id="timeframe"></div>
     
     <div class="controls">
@@ -51,6 +158,11 @@
         </thead>
         <tbody id="tableBody"></tbody>
     </table>
+
+    <footer>
+        Wibe coded by 
+        <a class="footer-link" href="https://www.linkedin.com/in/joonakortesmaki/" target="_blank" rel="noopener">Joona Kortesmäki</a>
+    </footer>
 
     <script>
         let allData = [];
