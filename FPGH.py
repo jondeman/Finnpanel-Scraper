@@ -68,11 +68,15 @@ def scrape_finnpanel(url):
         logging.error(f"Error scraping {url}: {str(e)}")
         return []
 
-def upload_to_github(df, filename, repo_name, github_token):
+def upload_to_github(df, filename, repo_identifier, github_token):
     logging.info(f"Uploading file: {filename}")
     try:
         g = Github(github_token)
-        repo = g.get_user().get_repo(repo_name)
+        # Use full repo name if provided (owner/repo) to avoid needing GET /user
+        if "/" in repo_identifier:
+            repo = g.get_repo(repo_identifier)
+        else:
+            repo = g.get_user().get_repo(repo_identifier)
         
         excel_file = BytesIO()
         df.to_excel(excel_file, index=False, engine='openpyxl')
@@ -113,11 +117,13 @@ def process_data(urls, period):
 # Main execution
 try:
     logging.info("Starting Finnpanel scraper")
-    GT_TOKEN = os.environ.get('GT_TOKEN')
-    GITHUB_REPO = 'Finnpanel-Scraper'
+    # Prefer custom secret GT_TOKEN; fallback to default GitHub Actions token
+    GT_TOKEN = os.environ.get('GT_TOKEN') or os.environ.get('GITHUB_TOKEN')
+    # Use full repo name when running in GitHub Actions, e.g. owner/repo
+    GITHUB_REPO = os.environ.get('GITHUB_REPOSITORY', 'Finnpanel-Scraper')
 
     if not GT_TOKEN:
-        raise ValueError("GT_TOKEN environment variable is not set")
+        raise ValueError("GT_TOKEN or GITHUB_TOKEN environment variable is not set")
 
     urls_14d = [
         'https://www.finnpanel.fi/tulokset/totaltv/mtv/online14/3plus.html',
