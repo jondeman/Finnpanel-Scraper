@@ -5,48 +5,45 @@ on:
     - cron: '0 1 * * *'  # Suoritetaan joka päivä klo 01:00 UTC
   workflow_dispatch:  # Mahdollistaa manuaalisen käynnistyksen
 
+permissions:
+  contents: write
+
 jobs:
   update-data:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.10'  # Käytetään Python 3.10 versiota yhteensopivuuden varmistamiseksi
+        python-version: '3.10'
+        cache: 'pip'
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install requests beautifulsoup4 pandas openpyxl PyGithub numpy
 
-    - name: Run Finnpanel scraper for 14 days
-      run: python FPGH.py --period 14
+    - name: Run Finnpanel scraper (creates/updates files via GitHub API)
+      run: python FPGH.py
       env:
-        GT_TOKEN: ${{ secrets.GT_TOKEN }}
-
-    - name: Run Finnpanel scraper for 90 days
-      run: python FPGH.py --period 90
-      env:
-        GT_TOKEN: ${{ secrets.GT_TOKEN }}
-
-    - name: Commit and push if there are changes
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add .
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Update Finnpanel data (14 and 90 days)" && git push)
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Update README
       run: |
+        # Hae viimeisin, koska edellinen steppi teki commitit API:n kautta
+        git fetch origin
+        git pull --rebase
+
         echo "# Finnpanel Data" > README.md
         echo "" >> README.md
-        echo "Viimeisin päivitys: $(date)" >> README.md
+        echo "Viimeisin päivitys: $(date -u)" >> README.md
         echo "" >> README.md
         echo "## Saatavilla olevat tiedostot" >> README.md
-        echo "- 14D_Finnpanel_data_$(date +%Y-%m-%d).csv" >> README.md
-        echo "- 90D_Finnpanel_data_$(date +%Y-%m-%d).csv" >> README.md
+        echo "- 14D_Finnpanel_data_$(date -u +%Y-%m-%d).xlsx" >> README.md
+        echo "- 90D_Finnpanel_data_$(date -u +%Y-%m-%d).xlsx" >> README.md
+
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add README.md
