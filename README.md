@@ -12,7 +12,7 @@ ohjelmista. Lähde: [Finnpanel](https://www.finnpanel.fi/). Keräys alkoi
 > `BEGIN:generated`-merkkien välisen osan.
 
 <!-- BEGIN:generated -->
-_Päivitetty: 2026-08-21 09:37 UTC_
+_Päivitetty: 2026-08-21 10:03 UTC_
 
 | | |
 |---|---|
