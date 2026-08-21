@@ -26,6 +26,9 @@ Collecting since **2 September 2024**. Runs unattended on GitHub Actions.
 - [What changed in v2](#what-changed-in-v2)
 - [Long-term durability risks](#long-term-durability-risks)
 
+A chronological record of changes and the reasoning behind them is in
+[DEVLOG.md](DEVLOG.md).
+
 ---
 
 ## How it works
@@ -56,7 +59,7 @@ Collecting since **2 September 2024**. Runs unattended on GitHub Actions.
       └─────────┬──────────┘
                 │
                 ▼
-      one commit, pushed to main (retried up to 3×)
+      one commit, pushed to the branch the run started from (3 retries)
                 │
                 ▼
    index.html fetches from raw.githubusercontent.com at page load
@@ -282,6 +285,17 @@ sidesteps this entirely.
 ⚠️ The corollary: **edits to `index.html` do not go live automatically.** Run the
 Pages workflow by hand after changing it.
 
+**The workflow pushes to the branch it ran from, not to a hardcoded `main`.**
+`git push origin HEAD:$GITHUB_REF_NAME` means a `workflow_dispatch` on a test
+branch commits to that branch. Testing the real workflow end-to-end therefore
+cannot touch production data.
+
+**No personal access token is needed.** v1 required a `GT_TOKEN` secret for the
+Contents API. v2 uses the automatic per-run `GITHUB_TOKEN` together with the
+`permissions:` block, so there is no PAT to expire and silently kill the job.
+The `GT_TOKEN` repository secret is now unused and can be removed once you have
+confirmed nothing else reads it.
+
 **Legacy `.xlsx` files were moved, not converted.** Converting them would keep
 both copies in git history forever to save a few MB of working tree. They were
 `git mv`'d — recorded as renames, costing almost nothing — and are represented in
@@ -310,11 +324,20 @@ archive.
 | 12 | Python 3.10 (EOL October 2026) | Python 3.12 |
 | 13 | No consolidated file; analysis meant globbing 1,435 spreadsheets | `data/finnpanel_all.csv` |
 | 14 | No local run mode — required a write token | `--dry-run`, and normal runs write only local files |
+| 15 | Required a `GT_TOKEN` PAT that would eventually expire | Uses the automatic `GITHUB_TOKEN`; no PAT at all |
+| 16 | Workflow pushed to a hardcoded `main`, so it could not be safely test-run | Pushes to `$GITHUB_REF_NAME` |
 
 **Data integrity was verified after the migration:** all 1,435 original `.xlsx`
 files are present and byte-identical, git recorded 1,435 renames and zero
 deletions, and 25 randomly sampled days reproduce exactly in the consolidated
 archive.
+
+**Verified on GitHub Actions**
+([run 32470848610](https://github.com/jondeman/Finnpanel-Scraper/actions/runs/32470848610),
+2026-08-21, 25s, all steps green). The **data files it produced were
+byte-identical to the local run** — its commit contains nothing but the README
+timestamp — confirming the scrape is deterministic across machines and Python
+versions. See [DEVLOG.md](DEVLOG.md).
 
 ---
 

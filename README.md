@@ -6,6 +6,7 @@ ohjelmista. Lähde: [Finnpanel](https://www.finnpanel.fi/). Keräys alkoi
 
 📊 **[Avaa dashboard](https://jondeman.github.io/Finnpanel-Scraper/)** ·
 📖 **[Tekninen dokumentaatio](DOCUMENTATION.md)** ·
+📝 **[Kehitysloki](DEVLOG.md)** ·
 💾 **[Tallennussuunnitelma](STORAGE-PLAN.md)**
 
 > Kaikki tämän lohkon ulkopuolinen teksti säilyy — työnkulku päivittää vain
