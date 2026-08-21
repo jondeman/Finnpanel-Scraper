@@ -1,0 +1,11 @@
+# Legacy archive: binary, never try to diff or merge these.
+*.xlsx binary
+
+# Data is plain text with LF endings everywhere.
+*.csv text eol=lf
+*.py  text eol=lf
+*.md  text eol=lf
+*.yml text eol=lf
+
+# Keep generated/bulk data out of GitHub's language statistics.
+data/** linguist-generated=true

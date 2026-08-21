@@ -152,6 +152,7 @@
                 <th>Rank</th>
                 <th>Service</th>
                 <th>Program</th>
+                <th>Episode</th>
                 <th>Duration</th>
                 <th>Viewers</th>
             </tr>
@@ -168,72 +169,108 @@
         let allData = [];
         const baseUrl = 'https://raw.githubusercontent.com/jondeman/Finnpanel-Scraper/main/';
 
-        // Set default date to yesterday
-        const yesterday = new Date(new Date().setDate(new Date().getDate() - 1));
-        document.getElementById('dateSelect').value = yesterday.toISOString().split('T')[0];
+        // Default to yesterday, and bound the picker to the collection window.
+        const todayUTC = new Date().toISOString().split('T')[0];
+        const dateInput = document.getElementById('dateSelect');
+        dateInput.value = shiftDays(todayUTC, -1);
+        dateInput.min = '2024-09-02';
+        dateInput.max = todayUTC;
 
-        function formatDate(date) {
-            const d = new Date(date);
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
+        // Dates are handled as plain YYYY-MM-DD strings throughout. Parsing
+        // them with new Date() yields UTC midnight, which the local-time
+        // getters then read back as the previous day for anyone west of UTC.
+        function formatDate(value) {
+            if (typeof value === 'string') return value.slice(0, 10);
+            const d = new Date(value);
+            return [d.getUTCFullYear(),
+                    String(d.getUTCMonth() + 1).padStart(2, '0'),
+                    String(d.getUTCDate()).padStart(2, '0')].join('-');
         }
 
-        function getStartDate(endDate, days) {
-            const start = new Date(endDate);
-            start.setDate(start.getDate() - days + 1); // +1 because the end date is inclusive
-            return start;
+        function shiftDays(dateStr, delta) {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const t = Date.UTC(y, m - 1, d) + delta * 86400000;
+            return formatDate(new Date(t));
         }
 
         function updateTimeframeDisplay() {
-            const endDate = new Date(document.getElementById('dateSelect').value);
+            const el = document.getElementById('timeframe');
+            const selected = document.getElementById('dateSelect').value;
             const days = document.getElementById('dataRange').value === '14D' ? 14 : 90;
-            const startDate = getStartDate(endDate, days);
-            
-            const timeframeElement = document.getElementById('timeframe');
-            timeframeElement.textContent = `Timeframe: ${formatDate(startDate)} - ${formatDate(endDate)}`;
+
+            // Files from 2026-08-21 onwards carry the measurement window that
+            // Finnpanel actually published. Older files do not, so the window
+            // has to be inferred -- and the inference is approximate: the real
+            // period typically ends a day or two before the collection date.
+            const withPeriod = allData.find(r => r.PeriodStart && r.PeriodEnd);
+            if (withPeriod) {
+                el.textContent = `Measured period: ${formatDate(withPeriod.PeriodStart)} – ${formatDate(withPeriod.PeriodEnd)}`;
+                el.title = `Collected ${selected}`;
+            } else {
+                el.textContent = `Timeframe (approx.): ${shiftDays(selected, -days + 1)} – ${selected}`;
+                el.title = 'Files before 2026-08-21 do not record the exact measured period.';
+            }
+        }
+
+        // Candidate locations, newest layout first. Everything from
+        // 2026-08-21 is CSV under data/<year>/; the 1,435 files before that are
+        // .xlsx, which lived in the repository root until they were moved into
+        // data/<year>/. The root path is kept as a last resort so that any
+        // older permalink still resolves.
+        function candidates(range, date) {
+            const year = date.slice(0, 4);
+            return [
+                `data/${year}/${range}_Finnpanel_data_${date}.csv`,
+                `data/${year}/${range}_Finnpanel_data_${date}.xlsx`,
+                `${range}_Finnpanel_data_${date}.xlsx`,
+            ];
+        }
+
+        function parseSheet(buffer, isCsv) {
+            // SheetJS reads CSV and XLSX through the same entry point.
+            const wb = isCsv
+                ? XLSX.read(new TextDecoder('utf-8').decode(buffer), {type: 'string'})
+                : XLSX.read(new Uint8Array(buffer), {type: 'array'});
+            const sheet = wb.Sheets[wb.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(sheet, {header: 1, blankrows: false});
+            if (!rows.length) return [];
+            const headers = rows[0];
+            return rows.slice(1).map(r => {
+                const o = {};
+                headers.forEach((h, i) => { o[h] = r[i]; });
+                return o;
+            });
         }
 
         async function fetchData() {
-            updateTimeframeDisplay();
             document.getElementById('loading').style.display = 'block';
             allData = [];
-            const selectedDate = document.getElementById('dateSelect').value;
-            const dataRange = document.getElementById('dataRange').value;
-            const formattedDate = formatDate(selectedDate);
-            const url = `${baseUrl}${dataRange}_Finnpanel_data_${formattedDate}.xlsx`;
-            
-            try {
-                const response = await fetch(url);
-                if (response.ok) {
-                    const arrayBuffer = await response.arrayBuffer();
-                    const data = new Uint8Array(arrayBuffer);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
-                    
-                    // Assuming the first row is headers
-                    const headers = jsonData[0];
-                    const rows = jsonData.slice(1);
-                    
-                    allData = rows.map(row => {
-                        let obj = {};
-                        headers.forEach((header, index) => {
-                            obj[header] = row[index];
-                        });
-                        return obj;
-                    });
-                    updateTable();
-                } else {
-                    console.error(`No data available for ${formattedDate}`);
-                    alert(`No data available for ${formattedDate}`);
+            const date = document.getElementById('dateSelect').value;
+            const range = document.getElementById('dataRange').value;
+
+            let loaded = false;
+            for (const path of candidates(range, date)) {
+                try {
+                    const response = await fetch(baseUrl + path);
+                    if (!response.ok) continue;
+                    allData = parseSheet(await response.arrayBuffer(),
+                                         path.endsWith('.csv'));
+                    loaded = true;
+                    break;
+                } catch (error) {
+                    console.warn(`Could not load ${path}`, error);
                 }
-            } catch (error) {
-                console.error(`Failed to fetch data for ${formattedDate}:`, error);
-                alert(`Failed to fetch data for ${formattedDate}`);
             }
+
+            const tableBody = document.getElementById('tableBody');
+            if (!loaded) {
+                tableBody.innerHTML =
+                    `<tr><td colspan="7">No data available for ${date}.</td></tr>`;
+                document.getElementById('timeframe').textContent = '';
+            } else {
+                updateTable();
+            }
+            updateTimeframeDisplay();
             document.getElementById('loading').style.display = 'none';
         }
 
@@ -254,6 +291,7 @@
                     <td>${row.Rank || ''}</td>
                     <td>${row.Service || ''}</td>
                     <td>${row.Program || ''}</td>
+                    <td>${row.Episode || ''}</td>
                     <td>${row.Duration || ''}</td>
                     <td>${(row.Viewers ? parseInt(row.Viewers).toLocaleString() : '')}</td>
                 `;
