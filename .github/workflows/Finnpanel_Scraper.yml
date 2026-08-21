@@ -56,9 +56,12 @@ jobs:
             exit 0
           fi
           git commit -m "Finnpanel data $(date -u +%Y-%m-%d)"
-          # Rebase onto anything that landed while we were scraping, then push.
+          # Push back to whichever branch this run was started from, so a
+          # workflow_dispatch on a test branch cannot write to main.
+          BRANCH="${GITHUB_REF_NAME}"
+          echo "Pushing to $BRANCH"
           for attempt in 1 2 3; do
-            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            git pull --rebase origin "$BRANCH" && git push origin "HEAD:$BRANCH" && exit 0
             echo "Push attempt $attempt failed, retrying..."
             sleep 5
           done
