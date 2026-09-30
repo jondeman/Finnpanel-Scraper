@@ -1,7 +1,7 @@
 # Finnpanel Data
 
-Viimeisin päivitys: Tue Sep 29 06:44:43 UTC 2026
+Viimeisin päivitys: Wed Sep 30 06:33:10 UTC 2026
 
 ## Saatavilla olevat tiedostot
-- 14D_Finnpanel_data_2026-09-29.xlsx
-- 90D_Finnpanel_data_2026-09-29.xlsx
+- 14D_Finnpanel_data_2026-09-30.xlsx
+- 90D_Finnpanel_data_2026-09-30.xlsx
