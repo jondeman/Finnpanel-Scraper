@@ -5,6 +5,81 @@ and why each decision went the way it did. Newest first.
 
 ---
 
+## 2026-10-07 — Compare demos view
+
+Branch `claude/compare-demos` · dashboard only, no scraper change
+
+### Why
+
+The first demo release had a "Compare all demos" option that listed all 240
+rows one demo after another. The first 60 rows were the 3+ list, so the view
+looked identical to 3+ and compared nothing.
+
+### What the data supports
+
+Measured on the 2026-10-07 files before designing anything:
+
+- **Alle 45 and 45+ add up to 3+.** For the 38 shows in all three 14-day lists
+  the two groups sum to the 3+ figure within −1k…+4k (Finnpanel rounds to
+  thousands). The under/over-45 split of a show's audience is therefore data,
+  not an estimate.
+- **That fills gaps.** A show missing from one age list can be worked out from
+  the other two (Cooper ja Fry: 145k − 134k ≈ 11k under 45).
+- **A missing figure still has a ceiling**: at most the 20th place of that
+  service's list (e.g. 11k for Yle, Alle 45, 14 days).
+- **Shows must be matched by series name.** Ruutu titles carry the episode and
+  the most-watched episode differs by demo. Exact-name matches against 3+:
+  Alle 45 43/60 (14D) and 31/60 (90D); by series 44/60 and 38/60.
+- **90-day figures are less exact**: different episodes per demo leave the two
+  groups up to 42k off the 3+ figure, so those splits are marked ≈.
+- **Some shows only make one demo's list**: 26 in the 14-day file.
+
+### Decisions worth recording
+
+**A List / Compare demos switch, not a dropdown option.** One row per show:
+3+ viewers, rank in each demo, under 45 vs 45+ split, share aged 25–64. A row
+opens a detail card with the figures side by side.
+
+**Colour only for the two age groups.** Under 45 blue `#2a78d6`, 45+ orange
+`#eb6834`, everywhere they appear. Validated, not eyeballed: CVD ΔE 24.7,
+normal-vision ΔE 33.6, both ≥3:1 on white. Everything else is grey.
+
+**Three rank shades, not five.** The middle grey `#898781` carries small text at
+neither 4.5:1 with white (3.59) nor with dark ink (4.17), so ranks use 1–10,
+11–30 and 31–60.
+
+**Percentages sit outside the split bar**, so an 8% or 0% slice never needs a
+clipped label. A marker shows the average split of the shows listed, so
+"skews young" means younger than a typical show, not younger than 50/50.
+
+**Tooltips only add detail.** Every value is also in the row or the card.
+
+### Verification
+
+| Check | Result |
+|---|---|
+| Browser test on the real 2026-10-07 files | Figures match the analysis: Salatut elämät ranks 1/4/4/1, 48%/52%, 71% aged 25–64; Cooper ja Fry ≈8%/≈92% with "at most 11,000" for Alle 45 |
+| Sorting | Youngest first: Pikku Kakkonen, Ryhmä Hau, Tuuri. Oldest first: La Promesa, Grantchester |
+| Demo-only shows toggle | 60 → 86 shows |
+| Pre-demo date | Explains that demo data starts 2026-10-07 instead of an empty table |
+| Phone width (390px) | Rows become cards; no sideways scroll |
+| List view | Existing test updated for the removed dropdown option; passes |
+
+### Follow-ups
+
+- [ ] Group sizes (population per demo) from the scraper, to compare by share
+      of each group reached. Do it with the `enhancements` port.
+- [ ] Trend line in the detail card once a few weeks of demo data exist.
+- [ ] Carry this view into `enhancements` too; that branch rewrote
+      `index.html`.
+
+### Known limitations
+
+- Ranks are across all three services within a demo, as in the data files.
+- The view works only from 2026-10-07, the first day with demo data.
+
+---
+
 ## 2026-10-07 — Demo breakdown (kohderyhmät)
 
 Branch `main` (v1) · commit [`3f277df`](../../commit/3f277df) · production

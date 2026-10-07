@@ -12,6 +12,14 @@
             --accent-blue: #e0e7ff;
             --white: #fff;
             --border-grey: #e5e7eb;
+            /* Demo comparison: the two age groups keep these colours everywhere */
+            --under45: #2a78d6;
+            --over45: #eb6834;
+            --size-bar: #898781;
+            --muted-text: #6b6a66;
+            --rank-top: #52514e;
+            --rank-mid: #c3c2b7;
+            --rank-low: #f0efec;
         }
         body { 
             font-family: Arial, sans-serif; 
@@ -104,6 +112,122 @@
             background: #f1f5ff;
             transition: background 0.15s;
         }
+        /* List / Compare demos switch */
+        .view-switch {
+            display: inline-flex;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        .view-switch button {
+            margin: 0;
+            border-radius: 0;
+            background: var(--white);
+            color: var(--accent-grey);
+            border: 1px solid var(--border-grey);
+        }
+        .view-switch button:first-child { border-radius: 5px 0 0 5px; }
+        .view-switch button:last-child { border-radius: 0 5px 5px 0; border-left: none; }
+        .view-switch button[aria-pressed="true"] {
+            background: var(--main-blue);
+            border-color: var(--main-blue);
+            color: var(--white);
+        }
+        .view-switch button[aria-pressed="false"]:hover { background: var(--accent-blue); }
+        /* Demo comparison */
+        .compare-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 18px;
+            margin-bottom: 10px;
+        }
+        .compare-toolbar label { font-size: 0.95rem; }
+        .compare-toolbar select { margin: 0 0 0 6px; }
+        .compare-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 16px;
+            margin-bottom: 12px;
+            font-size: 0.88rem;
+            color: var(--muted-text);
+        }
+        .compare-legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .key { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
+        .key.avg { width: 2px; height: 14px; border-radius: 0; background: var(--accent-grey); }
+        #compareMessage { margin: 12px 0; color: var(--muted-text); }
+        #compareTable td { border-left: none; border-right: none; vertical-align: middle; }
+        #compareTable th { border-left: none; border-right: none; }
+        .show-row { cursor: pointer; }
+        .show-row:focus-visible { outline: 2px solid var(--main-blue); outline-offset: -2px; }
+        .show-name { font-weight: bold; }
+        .show-service { font-size: 0.85rem; color: var(--muted-text); }
+        .size-bar { display: flex; align-items: center; gap: 6px; min-width: 120px; }
+        .size-bar .fill { flex: none; height: 12px; border-radius: 0 4px 4px 0; background: var(--size-bar); }
+        .size-bar .value, .split-value, .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .rank-grid { display: grid; grid-template-columns: repeat(4, 44px); gap: 2px; }
+        .rank-cell {
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+            border-radius: 3px;
+            color: var(--accent-grey);
+        }
+        .rank-cell.top { background: var(--rank-top); color: var(--white); }
+        .rank-cell.mid { background: var(--rank-mid); }
+        .rank-cell.low { background: var(--rank-low); }
+        .rank-cell.none { color: var(--muted-text); font-weight: normal; }
+        .rank-head { font-size: 0.78rem; font-weight: normal; text-align: center; white-space: nowrap; color: var(--muted-text); }
+        .rank-labels { display: none; margin-bottom: 3px; }
+        #compareTable tr { background: var(--white); }
+        #compareTable tr.show-row:hover { background: #f1f5ff; }
+        #compareTable tr.show-row:hover td { background: transparent; }
+        .split { display: flex; align-items: center; gap: 6px; min-width: 200px; }
+        .split-value { width: 3.6em; font-size: 0.9rem; }
+        .split-value.left { text-align: right; }
+        .split-bar { position: relative; display: flex; gap: 2px; flex: 1; height: 12px; }
+        .split-bar .seg { height: 100%; }
+        .split-bar .seg:first-of-type { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
+        .split-bar .seg:last-of-type { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+        .seg.under45 { background: var(--under45); }
+        .seg.over45 { background: var(--over45); }
+        .split-bar .avg {
+            position: absolute;
+            top: -4px;
+            bottom: -4px;
+            width: 2px;
+            margin-left: -1px;
+            background: var(--accent-grey);
+        }
+        .split-missing { font-size: 0.88rem; color: var(--muted-text); }
+        #compareTable tr.detail-row td { background: #f8fafc; padding: 14px 16px; }
+        .detail h3 { margin: 0 0 10px 0; font-size: 1.05rem; color: var(--main-blue); }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 70px minmax(80px, 220px) 90px 60px 1fr;
+            gap: 6px 12px;
+            align-items: center;
+            font-size: 0.92rem;
+        }
+        .detail-grid .head { font-size: 0.8rem; color: var(--muted-text); }
+        .detail-bar { height: 12px; border-radius: 0 4px 4px 0; background: var(--size-bar); }
+        .detail-bar.under45 { background: var(--under45); }
+        .detail-bar.over45 { background: var(--over45); }
+        .detail-note { color: var(--muted-text); font-size: 0.88rem; }
+        .detail p { margin: 8px 0; }
+        #tooltip {
+            position: absolute;
+            z-index: 10;
+            max-width: 280px;
+            padding: 6px 9px;
+            border-radius: 5px;
+            background: var(--accent-grey);
+            color: var(--white);
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
         /* Footer styles */
         footer {
             margin-top: 36px;
@@ -126,6 +250,34 @@
             .subtitle { font-size: 0.98rem; }
             th, td { font-size: 0.94rem; }
             .controls { font-size: 0.97rem; }
+            /* Comparison rows become cards */
+            #compareTable thead { display: none; }
+            #compareTable tr.show-row {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                grid-template-areas: "show share" "size size" "ranks ranks" "split split";
+                gap: 8px 10px;
+                padding: 10px 8px;
+                border-bottom: 1px solid var(--border-grey);
+            }
+            #compareTable tr.show-row td { border: none; padding: 0; }
+            #compareTable td.c-show { grid-area: show; }
+            #compareTable td.c-share { grid-area: share; text-align: right; }
+            #compareTable td.c-size { grid-area: size; }
+            #compareTable td.c-ranks { grid-area: ranks; }
+            #compareTable td.c-split { grid-area: split; }
+            #compareTable td[data-label]::before {
+                content: attr(data-label);
+                display: block;
+                font-size: 0.78rem;
+                color: var(--muted-text);
+                margin-bottom: 3px;
+            }
+            #compareTable tr.detail-row td { display: block; }
+            .rank-labels { display: grid; }
+            .detail-grid { grid-template-columns: 60px 1fr 80px 44px; }
+            .detail-grid .episode { grid-column: 1 / -1; margin-top: -4px; }
+            .detail-grid .head.episode { display: none; }
         }
     </style>
 </head>
@@ -135,6 +287,10 @@
     <div id="timeframe"></div>
     
     <div class="controls">
+        <div class="view-switch" role="group" aria-label="View">
+            <button type="button" id="viewList" aria-pressed="true">List</button>
+            <button type="button" id="viewCompare" aria-pressed="false">Compare demos</button>
+        </div>
         <input type="date" id="dateSelect">
         <select id="dataRange">
             <option value="14D">14 Days</option>
@@ -168,6 +324,46 @@
         <tbody id="tableBody"></tbody>
     </table>
 
+    <section id="compareView" hidden>
+        <div class="compare-toolbar">
+            <label>Sort by
+                <select id="compareSort">
+                    <option value="viewers">Most viewers (3+)</option>
+                    <option value="young">Youngest audience</option>
+                    <option value="old">Oldest audience</option>
+                </select>
+            </label>
+            <label><input type="checkbox" id="includeOutside"> Include shows that only made a demo list</label>
+        </div>
+        <div class="compare-legend">
+            <span><i class="key" style="background: var(--under45)"></i>Under 45</span>
+            <span><i class="key" style="background: var(--over45)"></i>45+</span>
+            <span><i class="key avg"></i>Average of the shows listed</span>
+            <span><i class="key" style="background: var(--rank-top)"></i>Rank 1–10</span>
+            <span><i class="key" style="background: var(--rank-mid)"></i>11–30</span>
+            <span><i class="key" style="background: var(--rank-low)"></i>31–60</span>
+            <span>≈ worked out from the other groups</span>
+        </div>
+        <div id="compareMessage" hidden></div>
+        <table id="compareTable">
+            <thead>
+                <tr>
+                    <th>Show</th>
+                    <th>3+ viewers</th>
+                    <th>Rank in each demo
+                        <div class="rank-grid">
+                            <span class="rank-head">3+</span><span class="rank-head">Alle 45</span><span class="rank-head">45+</span><span class="rank-head">25-64</span>
+                        </div>
+                    </th>
+                    <th>Audience: under 45 vs 45+</th>
+                    <th>Share 25-64</th>
+                </tr>
+            </thead>
+            <tbody id="compareBody"></tbody>
+        </table>
+    </section>
+    <div id="tooltip" role="tooltip" hidden></div>
+
     <footer>
         Vibe coded by 
         <a class="footer-link" href="https://www.linkedin.com/in/joonakortesmaki/" target="_blank" rel="noopener">Joona Kortesmäki</a>
@@ -178,7 +374,10 @@
         const baseUrl = 'https://raw.githubusercontent.com/jondeman/Finnpanel-Scraper/main/';
         // Demos in the order the scraper writes them; files from before the demo split only have 3+
         const demoOrder = ['3+', 'Alle 45', '45+', '25-64'];
-        const allDemos = 'all';
+        let hasDemoData = false;
+        let comparison = [];
+        let currentView = 'list';
+        let openShowKey = null;
 
         // Set default date to yesterday
         const yesterday = new Date(new Date().setDate(new Date().getDate() - 1));
@@ -239,7 +438,8 @@
                         return obj;
                     });
                     updateDemoOptions();
-                    updateTable();
+                    comparison = buildComparison(allData);
+                    render();
                 } else {
                     console.error(`No data available for ${formattedDate}`);
                     alert(`No data available for ${formattedDate}`);
@@ -265,26 +465,39 @@
 
             select.innerHTML = '';
             available.forEach(demo => select.add(new Option(`Demo: ${demo}`, demo)));
-            if (available.length > 1) {
-                select.add(new Option('Compare all demos', allDemos));
-            }
             select.value = previous;
             if (!select.value && available.length > 0) {
                 select.value = available.includes('3+') ? '3+' : available[0];
             }
+            hasDemoData = available.some(demo => demo !== '3+');
+        }
 
-            const onlyAllViewers = available.length === 1 && available[0] === '3+';
-            document.getElementById('demoNote').style.display = onlyAllViewers ? 'block' : 'none';
+        function render() {
+            const list = currentView === 'list';
+            document.getElementById('dataTable').hidden = !list;
+            document.getElementById('compareView').hidden = list;
+            document.getElementById('demo').hidden = !list;
+            const onlyAllViewers = allData.length > 0 && !hasDemoData;
+            document.getElementById('demoNote').style.display = list && onlyAllViewers ? 'block' : 'none';
+            if (list) {
+                updateTable();
+            } else {
+                updateCompare();
+            }
+        }
+
+        function setView(view) {
+            currentView = view;
+            document.getElementById('viewList').setAttribute('aria-pressed', String(view === 'list'));
+            document.getElementById('viewCompare').setAttribute('aria-pressed', String(view === 'compare'));
+            render();
         }
 
         function updateTable() {
             const service = document.getElementById('service').value;
             const demo = document.getElementById('demo').value;
-            
-            let filteredData = allData;
-            if (demo !== allDemos) {
-                filteredData = filteredData.filter(row => row.Demo === demo);
-            }
+
+            let filteredData = allData.filter(row => row.Demo === demo);
             if (service !== 'all') {
                 filteredData = filteredData.filter(row => row.Service === service);
             }
@@ -306,7 +519,334 @@
             });
         }
 
-        document.getElementById('service').addEventListener('change', updateTable);
+        // Ruutu titles carry the episode ("Syke - Kausi 24 - Jakso 4 ...") and the most-watched
+        // episode can differ between demos, so shows are matched by series name within a service
+        function seriesName(program) {
+            return String(program || '').split(/ - Kausi \d+/)[0].trim();
+        }
+
+        // One entry per show with its figures in each demo. Alle 45 and 45+ together make up the
+        // 3+ audience, so a figure missing from one of those lists can be worked out from the other two
+        function buildComparison(rows) {
+            const listFloor = {};
+            const shows = new Map();
+            rows.forEach(row => {
+                const viewers = Number(row.Viewers);
+                const rank = Number(row.Rank);
+                if (!viewers) return;
+                const listKey = `${row.Demo}|${row.Service}`;
+                listFloor[listKey] = Math.min(listFloor[listKey] ?? Infinity, viewers);
+                const name = seriesName(row.Program);
+                const key = `${row.Service}|${name}`;
+                if (!shows.has(key)) {
+                    shows.set(key, {key, name, service: row.Service, demos: {}});
+                }
+                const show = shows.get(key);
+                const current = show.demos[row.Demo];
+                if (!current || rank < current.rank) {
+                    show.demos[row.Demo] = {viewers, rank, program: String(row.Program)};
+                }
+            });
+
+            return [...shows.values()].map(show => {
+                const values = {};
+                demoOrder.forEach(demo => {
+                    values[demo] = show.demos[demo] ? show.demos[demo].viewers : null;
+                });
+                const total = values['3+'];
+                const under = values['Alle 45'];
+                const over = values['45+'];
+                const derived = {};
+                if (total !== null && under === null && over !== null) {
+                    values['Alle 45'] = Math.max(total - over, 0);
+                    derived['Alle 45'] = '3+ minus 45+';
+                }
+                if (total !== null && over === null && under !== null) {
+                    values['45+'] = Math.max(total - under, 0);
+                    derived['45+'] = '3+ minus Alle 45';
+                }
+                if (total === null && under !== null && over !== null) {
+                    values['3+'] = under + over;
+                    derived['3+'] = 'Alle 45 plus 45+';
+                }
+                // Each list shows the show's most-watched episode in that demo; when those episodes
+                // differ, the two age groups no longer add up to 3+
+                const mismatch = total !== null && under !== null && over !== null
+                    && Math.abs(under + over - total) > Math.max(2000, total * 0.05);
+                const u = values['Alle 45'];
+                const o = values['45+'];
+                const split = u !== null && o !== null && u + o > 0 ? u / (u + o) : null;
+                const share2564 = values['3+'] && values['25-64'] !== null
+                    ? Math.min(values['25-64'] / values['3+'], 1) : null;
+                const ceilings = {};
+                demoOrder.forEach(demo => {
+                    ceilings[demo] = listFloor[`${demo}|${show.service}`] ?? null;
+                });
+                return {
+                    ...show, values, derived, mismatch, split, share2564, ceilings,
+                    splitApprox: split !== null && (mismatch || 'Alle 45' in derived || '45+' in derived || '3+' in derived),
+                };
+            });
+        }
+
+        function el(tag, className, text) {
+            const node = document.createElement(tag);
+            if (className) node.className = className;
+            if (text !== undefined) node.textContent = text;
+            return node;
+        }
+
+        function thousands(value) {
+            return `${Math.round(value / 1000)}k`;
+        }
+
+        function percent(share) {
+            return `${Math.round(share * 100)}%`;
+        }
+
+        function notListedText(show, demo) {
+            const ceiling = show.ceilings[demo];
+            return ceiling ? `at most ${ceiling.toLocaleString()}` : 'not known';
+        }
+
+        function sortShows(shows, sort) {
+            const byViewers = (a, b) => (b.values['3+'] ?? -1) - (a.values['3+'] ?? -1);
+            if (sort === 'viewers') return shows.sort(byViewers);
+            const direction = sort === 'young' ? -1 : 1;
+            return shows.sort((a, b) => {
+                if (a.split === null || b.split === null) {
+                    return (a.split === null) - (b.split === null) || byViewers(a, b);
+                }
+                return direction * (a.split - b.split) || byViewers(a, b);
+            });
+        }
+
+        function updateCompare() {
+            const message = document.getElementById('compareMessage');
+            const table = document.getElementById('compareTable');
+            const body = document.getElementById('compareBody');
+            body.innerHTML = '';
+            if (!hasDemoData) {
+                message.textContent = allData.length
+                    ? 'This date only has the 3+ demo. Demo data starts on 2026-10-07, so pick that date or later.'
+                    : 'No data loaded for this date.';
+                message.hidden = false;
+                table.hidden = true;
+                return;
+            }
+            message.hidden = true;
+            table.hidden = false;
+
+            const service = document.getElementById('service').value;
+            const includeOutside = document.getElementById('includeOutside').checked;
+            const shows = sortShows(
+                comparison.filter(show => (service === 'all' || show.service === service)
+                    && (includeOutside || show.demos['3+'])),
+                document.getElementById('compareSort').value);
+
+            const maxViewers = Math.max(1, ...shows.map(show => show.values['3+'] || 0));
+            const splits = shows.map(show => show.split).filter(split => split !== null);
+            const average = splits.length ? splits.reduce((sum, split) => sum + split, 0) / splits.length : null;
+
+            shows.forEach(show => {
+                body.appendChild(renderShowRow(show, maxViewers, average));
+                if (show.key === openShowKey) {
+                    body.appendChild(renderDetailRow(show));
+                }
+            });
+        }
+
+        function toggleDetail(key) {
+            openShowKey = openShowKey === key ? null : key;
+            updateCompare();
+            const row = [...document.querySelectorAll('#compareBody tr.show-row')].find(tr => tr.dataset.key === key);
+            if (row) row.focus();
+        }
+
+        function renderShowRow(show, maxViewers, average) {
+            const tr = el('tr', 'show-row');
+            tr.dataset.key = show.key;
+            tr.tabIndex = 0;
+            tr.setAttribute('aria-expanded', String(show.key === openShowKey));
+            tr.addEventListener('click', () => toggleDetail(show.key));
+            tr.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    toggleDetail(show.key);
+                }
+            });
+
+            const nameCell = el('td', 'c-show');
+            nameCell.append(el('div', 'show-name', show.name), el('div', 'show-service', show.service));
+
+            const sizeCell = el('td', 'c-size');
+            sizeCell.dataset.label = '3+ viewers';
+            const total = show.values['3+'];
+            if (total !== null) {
+                const size = el('div', 'size-bar');
+                const fill = el('span', 'fill');
+                fill.style.width = `calc((100% - 3.5em) * ${total / maxViewers})`;
+                const approx = '3+' in show.derived ? '≈' : '';
+                size.append(fill, el('span', 'value', approx + thousands(total)));
+                size.dataset.tip = approx
+                    ? `≈${total.toLocaleString()} viewers aged 3+ (Alle 45 plus 45+; not in the 3+ list)`
+                    : `${total.toLocaleString()} viewers aged 3+`;
+                sizeCell.appendChild(size);
+            } else {
+                sizeCell.appendChild(el('span', 'split-missing', `Not in the 3+ list (${notListedText(show, '3+')})`));
+            }
+
+            const ranksCell = el('td', 'c-ranks');
+            ranksCell.dataset.label = 'Rank in each demo';
+            const labels = el('div', 'rank-grid rank-labels');
+            const grid = el('div', 'rank-grid');
+            demoOrder.forEach(demo => {
+                labels.appendChild(el('span', 'rank-head', demo));
+                const entry = show.demos[demo];
+                let cell;
+                if (entry) {
+                    const shade = entry.rank <= 10 ? 'top' : entry.rank <= 30 ? 'mid' : 'low';
+                    cell = el('span', `rank-cell ${shade}`, String(entry.rank));
+                    cell.dataset.tip = `#${entry.rank} in ${demo} · ${entry.viewers.toLocaleString()} viewers`;
+                } else {
+                    cell = el('span', 'rank-cell none', '–');
+                    cell.dataset.tip = `Not in the ${demo} list: ${notListedText(show, demo)} viewers`;
+                }
+                grid.appendChild(cell);
+            });
+            ranksCell.append(labels, grid);
+
+            const splitCell = el('td', 'c-split');
+            splitCell.dataset.label = 'Audience: under 45 vs 45+';
+            if (show.split !== null) {
+                const approx = show.splitApprox ? '≈' : '';
+                const split = el('div', 'split');
+                const bar = el('div', 'split-bar');
+                [['Alle 45', 'under45', show.split, 'Under 45'], ['45+', 'over45', 1 - show.split, '45+']]
+                    .forEach(([demo, className, share, label]) => {
+                        if (share <= 0) return;
+                        const seg = el('span', `seg ${className}`);
+                        seg.style.flex = `${share} 1 0`;
+                        const how = show.derived[demo] ? ` (worked out as ${show.derived[demo]})` : '';
+                        seg.dataset.tip = `${label}: ${approx}${show.values[demo].toLocaleString()} viewers, ${percent(share)}${how}`;
+                        bar.appendChild(seg);
+                    });
+                if (average !== null) {
+                    const marker = el('i', 'avg');
+                    marker.style.left = `${average * 100}%`;
+                    marker.dataset.tip = `Average of the shows listed: ${percent(average)} under 45`;
+                    bar.appendChild(marker);
+                }
+                split.append(
+                    el('span', 'split-value left', approx + percent(show.split)),
+                    bar,
+                    el('span', 'split-value', approx + percent(1 - show.split)));
+                splitCell.appendChild(split);
+            } else {
+                splitCell.appendChild(el('span', 'split-missing', 'Not enough data for the split'));
+            }
+
+            const shareCell = el('td', 'c-share num');
+            shareCell.dataset.label = 'Share 25-64';
+            shareCell.textContent = show.share2564 !== null
+                ? ('3+' in show.derived ? '≈' : '') + percent(show.share2564)
+                : '–';
+
+            tr.append(nameCell, sizeCell, ranksCell, splitCell, shareCell);
+            return tr;
+        }
+
+        function renderDetailRow(show) {
+            const tr = el('tr', 'detail-row');
+            const td = el('td');
+            td.colSpan = 5;
+            const detail = el('div', 'detail');
+            detail.appendChild(el('h3', null, `${show.name} · ${show.service}`));
+
+            // Ruutu lists name the episode; say it once when every list shows the same one
+            const listed = [...new Set(Object.values(show.demos).map(entry => entry.program))];
+            const sharedEpisode = listed.length === 1 && listed[0] !== show.name ? listed[0] : null;
+            if (sharedEpisode) {
+                detail.appendChild(el('p', 'detail-note', `Most-watched episode in every list: ${sharedEpisode}`));
+            }
+
+            const grid = el('div', 'detail-grid');
+            const headers = ['Demo', '', 'Viewers', 'Rank', 'Episode / note'].map((text, index) =>
+                el('span', index === 4 ? 'head episode' : 'head', text));
+            grid.append(...headers);
+            let anyNote = false;
+            const max = Math.max(1, ...demoOrder.map(demo => show.values[demo] || 0));
+            const barClass = {'Alle 45': 'under45', '45+': 'over45'};
+            demoOrder.forEach(demo => {
+                const entry = show.demos[demo];
+                const value = show.values[demo];
+                const bar = el('div', `detail-bar ${barClass[demo] || ''}`);
+                bar.style.width = value ? `${(value / max) * 100}%` : '0';
+                let valueText;
+                let note;
+                if (entry) {
+                    valueText = entry.viewers.toLocaleString();
+                    note = entry.program !== show.name && !sharedEpisode ? entry.program : '';
+                } else if (value !== null) {
+                    valueText = `≈${value.toLocaleString()}`;
+                    note = `Not in the list; worked out as ${show.derived[demo]}`;
+                } else {
+                    valueText = notListedText(show, demo);
+                    note = 'Not in the list';
+                }
+                anyNote = anyNote || note !== '';
+                grid.append(
+                    el('span', null, demo),
+                    bar,
+                    el('span', 'num', valueText),
+                    el('span', 'num', entry ? `#${entry.rank}` : '–'),
+                    el('span', 'episode detail-note', note));
+            });
+            if (!anyNote) headers[4].textContent = '';
+            detail.appendChild(grid);
+
+            if (show.split !== null) {
+                const approx = show.splitApprox ? '≈' : '';
+                let summary = `${approx}${percent(show.split)} of the viewers are under 45 and ${approx}${percent(1 - show.split)} are 45 or older.`;
+                if (show.share2564 !== null) {
+                    summary += ` ${percent(show.share2564)} are 25–64.`;
+                }
+                detail.appendChild(el('p', 'detail-summary', summary));
+            }
+            if (show.mismatch) {
+                detail.appendChild(el('p', 'detail-note',
+                    'The 3+, Alle 45 and 45+ lists show different episodes of this show, so the split is approximate.'));
+            } else if (Object.keys(show.derived).length > 0) {
+                detail.appendChild(el('p', 'detail-note',
+                    '≈ figures are worked out from the other groups: Alle 45 and 45+ together make up the 3+ audience.'));
+            }
+
+            td.appendChild(detail);
+            tr.appendChild(td);
+            return tr;
+        }
+
+        const tooltip = document.getElementById('tooltip');
+        document.addEventListener('pointerover', event => {
+            const target = event.target.closest && event.target.closest('[data-tip]');
+            if (!target) {
+                tooltip.hidden = true;
+                return;
+            }
+            tooltip.textContent = target.dataset.tip;
+            tooltip.hidden = false;
+            const rect = target.getBoundingClientRect();
+            const left = Math.min(rect.left, document.documentElement.clientWidth - tooltip.offsetWidth - 8);
+            tooltip.style.left = `${Math.max(8, left) + window.scrollX}px`;
+            tooltip.style.top = `${rect.top + window.scrollY - tooltip.offsetHeight - 6}px`;
+        });
+        document.addEventListener('scroll', () => { tooltip.hidden = true; }, {passive: true});
+
+        document.getElementById('viewList').addEventListener('click', () => setView('list'));
+        document.getElementById('viewCompare').addEventListener('click', () => setView('compare'));
+        document.getElementById('compareSort').addEventListener('change', updateCompare);
+        document.getElementById('includeOutside').addEventListener('change', updateCompare);
+        document.getElementById('service').addEventListener('change', render);
         document.getElementById('demo').addEventListener('change', updateTable);
         document.getElementById('dateSelect').addEventListener('change', fetchData);
         document.getElementById('dataRange').addEventListener('change', fetchData);
