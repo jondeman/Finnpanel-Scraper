@@ -112,111 +112,224 @@
             background: #f1f5ff;
             transition: background 0.15s;
         }
-        /* List / Compare demos switch */
-        .view-switch {
+        /* Segmented controls: List / Compare demos, and the sort buttons */
+        .segmented {
             display: inline-flex;
-            margin-right: 10px;
+            flex-wrap: wrap;
+            gap: 2px;
+            padding: 3px;
+            border-radius: 8px;
+            background: #eef1f6;
             vertical-align: middle;
         }
-        .view-switch button {
+        .controls .segmented { margin-right: 10px; }
+        .segmented button {
             margin: 0;
-            border-radius: 0;
+            padding: 6px 12px;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--accent-grey);
+            font-size: 0.95rem;
+        }
+        .segmented button:hover { background: #e1e6ef; }
+        .segmented button[aria-pressed="true"] {
+            background: var(--white);
+            color: var(--main-blue);
+            font-weight: bold;
+            box-shadow: 0 1px 3px #0002;
+        }
+        /* Demo comparison */
+        #compareMessage {
+            margin: 12px 0;
+            padding: 18px;
+            border-radius: 10px;
+            background: var(--white);
+            color: var(--muted-text);
+            box-shadow: 0 1px 7px #0001;
+        }
+        .highlights {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .tile {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin: 0;
+            padding: 14px 16px;
+            border: 1px solid var(--border-grey);
+            border-top: 4px solid var(--rank-mid);
+            border-radius: 10px;
             background: var(--white);
             color: var(--accent-grey);
-            border: 1px solid var(--border-grey);
+            box-shadow: 0 1px 7px #0001;
+            text-align: left;
+            font: inherit;
+            transition: transform 0.15s, box-shadow 0.15s;
         }
-        .view-switch button:first-child { border-radius: 5px 0 0 5px; }
-        .view-switch button:last-child { border-radius: 0 5px 5px 0; border-left: none; }
-        .view-switch button[aria-pressed="true"] {
-            background: var(--main-blue);
-            border-color: var(--main-blue);
-            color: var(--white);
-        }
-        .view-switch button[aria-pressed="false"]:hover { background: var(--accent-blue); }
-        /* Demo comparison */
+        .tile:hover { background: var(--white); transform: translateY(-2px); box-shadow: 0 4px 14px #0002; }
+        .tile.under45 { border-top-color: var(--under45); }
+        .tile.over45 { border-top-color: var(--over45); }
+        .tile-label { font-size: 0.82rem; color: var(--muted-text); }
+        .tile-value { margin: 6px 0 2px; font-size: 2rem; font-weight: bold; line-height: 1.1; color: var(--main-blue); }
+        .tile-value small { font-size: 0.85rem; font-weight: normal; color: var(--muted-text); }
+        .tile-show { font-weight: bold; overflow-wrap: anywhere; }
+        .tile-meta { font-size: 0.85rem; color: var(--muted-text); }
+        .mini-split { display: flex; gap: 2px; width: 100%; height: 6px; margin: 4px 0 6px; }
         .compare-toolbar {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: 8px 18px;
-            margin-bottom: 10px;
-        }
-        .compare-toolbar label { font-size: 0.95rem; }
-        .compare-toolbar select { margin: 0 0 0 6px; }
-        .compare-legend {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px 16px;
+            gap: 10px 18px;
             margin-bottom: 12px;
-            font-size: 0.88rem;
-            color: var(--muted-text);
         }
-        .compare-legend span { display: inline-flex; align-items: center; gap: 6px; }
-        .key { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
-        .key.avg { width: 2px; height: 14px; border-radius: 0; background: var(--accent-grey); }
-        #compareMessage { margin: 12px 0; color: var(--muted-text); }
-        #compareTable td { border-left: none; border-right: none; vertical-align: middle; }
-        #compareTable th { border-left: none; border-right: none; }
-        .show-row { cursor: pointer; }
-        .show-row:focus-visible { outline: 2px solid var(--main-blue); outline-offset: -2px; }
-        .show-name { font-weight: bold; }
-        .show-service { font-size: 0.85rem; color: var(--muted-text); }
-        .size-bar { display: flex; align-items: center; gap: 6px; min-width: 120px; }
-        .size-bar .fill { flex: none; height: 12px; border-radius: 0 4px 4px 0; background: var(--size-bar); }
-        .size-bar .value, .split-value, .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
-        .rank-grid { display: grid; grid-template-columns: repeat(4, 44px); gap: 2px; }
-        .rank-cell {
-            height: 24px;
-            line-height: 24px;
-            text-align: center;
+        .toolbar-label { font-size: 0.9rem; color: var(--muted-text); }
+        .check { display: inline-flex; align-items: center; gap: 6px; font-size: 0.92rem; }
+        .pyramid {
+            padding: 6px 16px 16px;
+            border-radius: 10px;
+            background: var(--white);
+            box-shadow: 0 1px 7px #0001;
+        }
+        .pyramid-head, .row-btn {
+            display: grid;
+            grid-template-columns: 2.4em minmax(130px, 1fr) minmax(0, 2.6fr);
+            column-gap: 14px;
+            align-items: center;
+        }
+        .pyramid-head {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-grey);
             font-size: 0.85rem;
             font-weight: bold;
+            color: var(--muted-text);
+        }
+        .pyramid-head .pos-head { text-align: right; }
+        .fly { display: grid; grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr); align-items: center; }
+        .pyramid-head .side { display: inline-flex; align-items: center; gap: 6px; }
+        .pyramid-head .side.left { justify-content: flex-end; padding-right: 10px; }
+        .pyramid-head .side.right { padding-left: 10px; }
+        .key { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
+        #pyramid { margin: 0; padding: 0; list-style: none; }
+        .row-btn {
+            width: 100%;
+            margin: 0;
+            padding: 6px 0;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--accent-grey);
+            text-align: left;
+            font: inherit;
+        }
+        .row-btn:hover { background: #f4f7fc; }
+        .row-btn[aria-expanded="true"] { background: #eaf0fa; }
+        .row-btn:focus-visible { outline: 2px solid var(--main-blue); outline-offset: -2px; }
+        .pos {
+            text-align: right;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--main-blue);
             font-variant-numeric: tabular-nums;
-            border-radius: 3px;
+        }
+        .pos.none { color: var(--rank-mid); }
+        .who { min-width: 0; }
+        .name { display: block; font-weight: bold; overflow-wrap: anywhere; }
+        .meta { display: block; font-size: 0.82rem; color: var(--muted-text); }
+        .axis { align-self: stretch; width: 1px; background: var(--rank-mid); }
+        .half { display: flex; align-items: center; gap: 6px; height: 24px; }
+        .half.left { justify-content: flex-end; padding-right: 2px; }
+        .half.right { padding-left: 2px; }
+        .bar {
+            flex: none;
+            height: 14px;
+            width: calc((100% - 6em) * var(--w));
+            animation: grow 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+            animation-delay: var(--delay, 0s);
+        }
+        .half.left .bar { background: var(--under45); border-radius: 4px 0 0 4px; transform-origin: right center; }
+        .half.right .bar { background: var(--over45); border-radius: 0 4px 4px 0; transform-origin: left center; }
+        .bar.approx { opacity: 0.45; }
+        .val { font-size: 0.85rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .val.missing { color: var(--muted-text); }
+        .rk {
+            display: inline-block;
+            margin: 0 3px;
+            padding: 0 5px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            line-height: 1.6;
             color: var(--accent-grey);
         }
-        .rank-cell.top { background: var(--rank-top); color: var(--white); }
-        .rank-cell.mid { background: var(--rank-mid); }
-        .rank-cell.low { background: var(--rank-low); }
-        .rank-cell.none { color: var(--muted-text); font-weight: normal; }
-        .rank-head { font-size: 0.78rem; font-weight: normal; text-align: center; white-space: nowrap; color: var(--muted-text); }
-        .rank-labels { display: none; margin-bottom: 3px; }
-        #compareTable tr { background: var(--white); }
-        #compareTable tr.show-row:hover { background: #f1f5ff; }
-        #compareTable tr.show-row:hover td { background: transparent; }
-        .split { display: flex; align-items: center; gap: 6px; min-width: 200px; }
-        .split-value { width: 3.6em; font-size: 0.9rem; }
-        .split-value.left { text-align: right; }
-        .split-bar { position: relative; display: flex; gap: 2px; flex: 1; height: 12px; }
-        .split-bar .seg { height: 100%; }
-        .split-bar .seg:first-of-type { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
-        .split-bar .seg:last-of-type { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
-        .seg.under45 { background: var(--under45); }
-        .seg.over45 { background: var(--over45); }
-        .split-bar .avg {
+        .rk.top { background: var(--rank-top); color: var(--white); }
+        .rk.mid { background: var(--rank-mid); }
+        .rk.low { background: var(--rank-low); }
+        @keyframes grow { from { transform: scaleX(0); } }
+        @keyframes rise { from { opacity: 0; transform: translateY(-6px); } }
+        @media (prefers-reduced-motion: reduce) {
+            .bar, .detail { animation: none; }
+            .tile { transition: none; }
+        }
+        .show-all {
+            display: block;
+            margin: 14px auto 0;
+            border: 1px solid var(--border-grey);
+            background: var(--white);
+            color: var(--main-blue);
+        }
+        .show-all:hover { background: var(--accent-blue); }
+        .compare-footnote { margin: 12px 2px 0; font-size: 0.85rem; color: var(--muted-text); }
+        .seg-under45 { background: var(--under45); }
+        .seg-over45 { background: var(--over45); }
+        .track-seg:first-child { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
+        .track-seg:last-child { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+        /* Detail card */
+        .detail {
+            margin: 4px 0 12px;
+            padding: 20px;
+            border: 1px solid var(--border-grey);
+            border-radius: 12px;
+            background: #f8fafc;
+            animation: rise 0.25s ease-out;
+        }
+        .detail-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px 24px; }
+        .detail h3 { margin: 0 0 4px; font-size: 1.4rem; color: var(--main-blue); }
+        .detail-meta { font-size: 0.9rem; color: var(--muted-text); }
+        .hero { text-align: right; }
+        .hero-num { display: block; font-size: 2.6rem; font-weight: bold; line-height: 1; color: var(--main-blue); }
+        .hero-label { font-size: 0.85rem; color: var(--muted-text); }
+        .split-big { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; margin: 20px 0; }
+        .split-big .pct { font-size: 1.6rem; font-weight: bold; line-height: 1.1; }
+        .split-big .pct.right { text-align: right; }
+        .split-big .pct small { display: block; font-size: 0.8rem; font-weight: normal; color: var(--muted-text); }
+        .split-track { display: flex; gap: 2px; height: 18px; }
+        .rank-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+        .rank-tile {
+            position: relative;
+            padding: 10px 12px;
+            border: 1px solid var(--border-grey);
+            border-top: 4px solid var(--size-bar);
+            border-radius: 8px;
+            background: var(--white);
+        }
+        .rank-tile.under45 { border-top-color: var(--under45); }
+        .rank-tile.over45 { border-top-color: var(--over45); }
+        .rank-tile .big { display: block; font-size: 1.8rem; font-weight: bold; line-height: 1.2; }
+        .rank-tile .lbl { display: block; font-size: 0.85rem; color: var(--muted-text); }
+        .rank-tile .sub { display: block; margin-top: 4px; font-size: 0.85rem; }
+        .rank-tile .episode { display: block; margin-top: 4px; font-size: 0.78rem; color: var(--muted-text); overflow-wrap: anywhere; }
+        .badge {
             position: absolute;
-            top: -4px;
-            bottom: -4px;
-            width: 2px;
-            margin-left: -1px;
-            background: var(--accent-grey);
+            top: 8px;
+            right: 8px;
+            padding: 1px 7px;
+            border-radius: 10px;
+            background: var(--main-blue);
+            color: var(--white);
+            font-size: 0.72rem;
         }
-        .split-missing { font-size: 0.88rem; color: var(--muted-text); }
-        #compareTable tr.detail-row td { background: #f8fafc; padding: 14px 16px; }
-        .detail h3 { margin: 0 0 10px 0; font-size: 1.05rem; color: var(--main-blue); }
-        .detail-grid {
-            display: grid;
-            grid-template-columns: 70px minmax(80px, 220px) 90px 60px 1fr;
-            gap: 6px 12px;
-            align-items: center;
-            font-size: 0.92rem;
-        }
-        .detail-grid .head { font-size: 0.8rem; color: var(--muted-text); }
-        .detail-bar { height: 12px; border-radius: 0 4px 4px 0; background: var(--size-bar); }
-        .detail-bar.under45 { background: var(--under45); }
-        .detail-bar.over45 { background: var(--over45); }
-        .detail-note { color: var(--muted-text); font-size: 0.88rem; }
-        .detail p { margin: 8px 0; }
+        .detail-note { margin: 12px 0 0; font-size: 0.88rem; color: var(--muted-text); }
         #tooltip {
             position: absolute;
             z-index: 10;
@@ -250,34 +363,18 @@
             .subtitle { font-size: 0.98rem; }
             th, td { font-size: 0.94rem; }
             .controls { font-size: 0.97rem; }
-            /* Comparison rows become cards */
-            #compareTable thead { display: none; }
-            #compareTable tr.show-row {
-                display: grid;
-                grid-template-columns: 1fr auto;
-                grid-template-areas: "show share" "size size" "ranks ranks" "split split";
-                gap: 8px 10px;
-                padding: 10px 8px;
-                border-bottom: 1px solid var(--border-grey);
-            }
-            #compareTable tr.show-row td { border: none; padding: 0; }
-            #compareTable td.c-show { grid-area: show; }
-            #compareTable td.c-share { grid-area: share; text-align: right; }
-            #compareTable td.c-size { grid-area: size; }
-            #compareTable td.c-ranks { grid-area: ranks; }
-            #compareTable td.c-split { grid-area: split; }
-            #compareTable td[data-label]::before {
-                content: attr(data-label);
-                display: block;
-                font-size: 0.78rem;
-                color: var(--muted-text);
-                margin-bottom: 3px;
-            }
-            #compareTable tr.detail-row td { display: block; }
-            .rank-labels { display: grid; }
-            .detail-grid { grid-template-columns: 60px 1fr 80px 44px; }
-            .detail-grid .episode { grid-column: 1 / -1; margin-top: -4px; }
-            .detail-grid .head.episode { display: none; }
+            /* Comparison on phones */
+            .highlights { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+            .tile { padding: 10px 12px; }
+            .tile-value { font-size: 1.5rem; }
+            .pyramid { padding: 4px 8px 12px; }
+            .pyramid-head, .row-btn { grid-template-columns: 1.9em minmax(0, 1fr); column-gap: 8px; }
+            .pyramid-head .fly, .row-btn .fly { grid-column: 1 / -1; }
+            .pyramid-head .who-head, .pyramid-head .pos-head { display: none; }
+            #compareSort button { padding: 6px 8px; font-size: 0.88rem; }
+            .rank-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .hero { text-align: left; }
+            .detail { padding: 14px; }
         }
     </style>
 </head>
@@ -287,7 +384,7 @@
     <div id="timeframe"></div>
     
     <div class="controls">
-        <div class="view-switch" role="group" aria-label="View">
+        <div class="segmented" role="group" aria-label="View">
             <button type="button" id="viewList" aria-pressed="true">List</button>
             <button type="button" id="viewCompare" aria-pressed="false">Compare demos</button>
         </div>
@@ -325,42 +422,40 @@
     </table>
 
     <section id="compareView" hidden>
-        <div class="compare-toolbar">
-            <label>Sort by
-                <select id="compareSort">
-                    <option value="viewers">Most viewers (3+)</option>
-                    <option value="young">Youngest audience</option>
-                    <option value="old">Oldest audience</option>
-                </select>
-            </label>
-            <label><input type="checkbox" id="includeOutside"> Include shows that only made a demo list</label>
-        </div>
-        <div class="compare-legend">
-            <span><i class="key" style="background: var(--under45)"></i>Under 45</span>
-            <span><i class="key" style="background: var(--over45)"></i>45+</span>
-            <span><i class="key avg"></i>Average of the shows listed</span>
-            <span><i class="key" style="background: var(--rank-top)"></i>Rank 1–10</span>
-            <span><i class="key" style="background: var(--rank-mid)"></i>11–30</span>
-            <span><i class="key" style="background: var(--rank-low)"></i>31–60</span>
-            <span>≈ worked out from the other groups</span>
-        </div>
         <div id="compareMessage" hidden></div>
-        <table id="compareTable">
-            <thead>
-                <tr>
-                    <th>Show</th>
-                    <th>3+ viewers</th>
-                    <th>Rank in each demo
-                        <div class="rank-grid">
-                            <span class="rank-head">3+</span><span class="rank-head">Alle 45</span><span class="rank-head">45+</span><span class="rank-head">25-64</span>
-                        </div>
-                    </th>
-                    <th>Audience: under 45 vs 45+</th>
-                    <th>Share 25-64</th>
-                </tr>
-            </thead>
-            <tbody id="compareBody"></tbody>
-        </table>
+        <div id="compareContent">
+            <div class="highlights" id="highlights"></div>
+            <div class="compare-toolbar">
+                <span class="toolbar-label">Sort by</span>
+                <div class="segmented" id="compareSort" role="group" aria-label="Sort shows">
+                    <button type="button" data-sort="total" aria-pressed="true">Total</button>
+                    <button type="button" data-sort="under45" aria-pressed="false">Under 45</button>
+                    <button type="button" data-sort="over45" aria-pressed="false">45+</button>
+                    <button type="button" data-sort="young" aria-pressed="false">Youngest</button>
+                    <button type="button" data-sort="old" aria-pressed="false">Oldest</button>
+                </div>
+                <label class="check"><input type="checkbox" id="includeOutside"> Include shows that only made a demo list</label>
+            </div>
+            <div class="pyramid">
+                <div class="pyramid-head" aria-hidden="true">
+                    <span class="pos-head">#</span>
+                    <span class="who-head">Show</span>
+                    <span class="fly">
+                        <span class="side left">Under 45 viewers <i class="key seg-under45"></i></span>
+                        <span class="axis"></span>
+                        <span class="side right"><i class="key seg-over45"></i> 45+ viewers</span>
+                    </span>
+                </div>
+                <ol id="pyramid"></ol>
+                <button type="button" class="show-all" id="showAll" hidden></button>
+            </div>
+            <p class="compare-footnote">
+                The big number is the show's rank among all viewers (3+). Each bar shows how many viewers the show
+                has in that age group, with its rank in that group's list (dark = top 10). Under 45 and 45+ together
+                make up the 3+ audience, so a figure missing from one list is worked out from the other two and
+                marked ≈. Select a show for details.
+            </p>
+        </div>
     </section>
     <div id="tooltip" role="tooltip" hidden></div>
 
@@ -609,221 +704,289 @@
             return ceiling ? `at most ${ceiling.toLocaleString()}` : 'not known';
         }
 
+        const topRows = 20;
+        let compareSort = 'total';
+        let showAllRows = false;
+
+        function rankShade(rank) {
+            return rank <= 10 ? 'top' : rank <= 30 ? 'mid' : 'low';
+        }
+
         function sortShows(shows, sort) {
-            const byViewers = (a, b) => (b.values['3+'] ?? -1) - (a.values['3+'] ?? -1);
-            if (sort === 'viewers') return shows.sort(byViewers);
-            const direction = sort === 'young' ? -1 : 1;
-            return shows.sort((a, b) => {
+            const value = (show, demo) => show.values[demo] ?? -1;
+            const byTotal = (a, b) => value(b, '3+') - value(a, '3+');
+            const bySplit = direction => (a, b) => {
                 if (a.split === null || b.split === null) {
-                    return (a.split === null) - (b.split === null) || byViewers(a, b);
+                    return (a.split === null) - (b.split === null) || byTotal(a, b);
                 }
-                return direction * (a.split - b.split) || byViewers(a, b);
-            });
+                return direction * (a.split - b.split) || byTotal(a, b);
+            };
+            const comparers = {
+                total: byTotal,
+                under45: (a, b) => value(b, 'Alle 45') - value(a, 'Alle 45') || byTotal(a, b),
+                over45: (a, b) => value(b, '45+') - value(a, '45+') || byTotal(a, b),
+                young: bySplit(-1),
+                old: bySplit(1),
+            };
+            return shows.sort(comparers[sort]);
+        }
+
+        function shownShows() {
+            const service = document.getElementById('service').value;
+            const includeOutside = document.getElementById('includeOutside').checked;
+            return sortShows(comparison.filter(show => (service === 'all' || show.service === service)
+                && (includeOutside || show.demos['3+'])), compareSort);
         }
 
         function updateCompare() {
             const message = document.getElementById('compareMessage');
-            const table = document.getElementById('compareTable');
-            const body = document.getElementById('compareBody');
-            body.innerHTML = '';
+            const content = document.getElementById('compareContent');
             if (!hasDemoData) {
                 message.textContent = allData.length
                     ? 'This date only has the 3+ demo. Demo data starts on 2026-10-07, so pick that date or later.'
                     : 'No data loaded for this date.';
                 message.hidden = false;
-                table.hidden = true;
+                content.hidden = true;
                 return;
             }
             message.hidden = true;
-            table.hidden = false;
+            content.hidden = false;
 
-            const service = document.getElementById('service').value;
-            const includeOutside = document.getElementById('includeOutside').checked;
-            const shows = sortShows(
-                comparison.filter(show => (service === 'all' || show.service === service)
-                    && (includeOutside || show.demos['3+'])),
-                document.getElementById('compareSort').value);
+            const shows = shownShows();
+            renderHighlights(shows);
 
-            const maxViewers = Math.max(1, ...shows.map(show => show.values['3+'] || 0));
-            const splits = shows.map(show => show.split).filter(split => split !== null);
-            const average = splits.length ? splits.reduce((sum, split) => sum + split, 0) / splits.length : null;
-
-            shows.forEach(show => {
-                body.appendChild(renderShowRow(show, maxViewers, average));
+            // One scale for both sides so under-45 and 45+ bars compare directly
+            const scale = Math.max(1, ...shows.map(show =>
+                Math.max(show.values['Alle 45'] || 0, show.values['45+'] || 0)));
+            const list = document.getElementById('pyramid');
+            list.innerHTML = '';
+            (showAllRows ? shows : shows.slice(0, topRows)).forEach((show, index) => {
+                list.appendChild(renderShowRow(show, scale, index));
                 if (show.key === openShowKey) {
-                    body.appendChild(renderDetailRow(show));
+                    list.appendChild(renderDetail(show));
                 }
             });
+
+            const more = document.getElementById('showAll');
+            more.hidden = shows.length <= topRows;
+            more.textContent = showAllRows ? `Show top ${topRows}` : `Show all ${shows.length} shows`;
+        }
+
+        function renderHighlights(shows) {
+            const box = document.getElementById('highlights');
+            box.innerHTML = '';
+            const pick = (score) => shows
+                .filter(show => score(show) !== null)
+                .sort((a, b) => score(b) - score(a) || (b.values['3+'] ?? 0) - (a.values['3+'] ?? 0))[0];
+            const listed = demo => show => show.demos[demo] ? show.demos[demo].viewers : null;
+            const youngest = pick(show => show.split);
+            const oldest = pick(show => show.split === null ? null : 1 - show.split);
+            const tiles = [
+                {label: 'Biggest with under 45s', className: 'under45', show: pick(listed('Alle 45')),
+                    value: show => thousands(show.demos['Alle 45'].viewers), unit: 'viewers',
+                    meta: show => `${show.service} · #${show.demos['Alle 45'].rank} in Alle 45`},
+                {label: 'Biggest with 45+', className: 'over45', show: pick(listed('45+')),
+                    value: show => thousands(show.demos['45+'].viewers), unit: 'viewers',
+                    meta: show => `${show.service} · #${show.demos['45+'].rank} in 45+`},
+                {label: 'Youngest audience', show: youngest, split: true,
+                    value: show => (show.splitApprox ? '≈' : '') + percent(show.split), unit: 'under 45',
+                    meta: show => show.service},
+                {label: 'Oldest audience', show: oldest, split: true,
+                    value: show => (show.splitApprox ? '≈' : '') + percent(1 - show.split), unit: '45+',
+                    meta: show => show.service},
+            ];
+            tiles.forEach(tile => {
+                if (!tile.show) return;
+                const button = el('button', `tile ${tile.className || ''}`);
+                button.type = 'button';
+                const value = el('span', 'tile-value', tile.value(tile.show));
+                value.appendChild(el('small', null, ` ${tile.unit}`));
+                button.append(el('span', 'tile-label', tile.label), value);
+                if (tile.split) {
+                    button.appendChild(splitTrack(tile.show.split, 'mini-split'));
+                }
+                button.append(el('span', 'tile-show', tile.show.name), el('span', 'tile-meta', tile.meta(tile.show)));
+                button.addEventListener('click', () => openShow(tile.show.key));
+                box.appendChild(button);
+            });
+        }
+
+        function splitTrack(split, className) {
+            const track = el('span', className);
+            [['seg-under45', split], ['seg-over45', 1 - split]].forEach(([segClass, share]) => {
+                if (share <= 0) return;
+                const seg = el('span', `track-seg ${segClass}`);
+                seg.style.flex = `${share} 1 0`;
+                track.appendChild(seg);
+            });
+            return track;
+        }
+
+        function renderShowRow(show, scale, index) {
+            const li = el('li');
+            li.dataset.key = show.key;
+            const button = el('button', 'row-btn');
+            button.type = 'button';
+            button.setAttribute('aria-expanded', String(show.key === openShowKey));
+            button.addEventListener('click', () => toggleDetail(show.key));
+
+            const overall = show.demos['3+'];
+            const pos = el('span', overall ? 'pos' : 'pos none', overall ? String(overall.rank) : '–');
+            pos.dataset.tip = overall ? `#${overall.rank} among all viewers (3+)` : 'Not in the 3+ list';
+
+            const meta = [show.service];
+            if (show.values['3+'] !== null) {
+                meta.push(`${'3+' in show.derived ? '≈' : ''}${thousands(show.values['3+'])} viewers`);
+            }
+            if (show.split !== null) {
+                meta.push(`${show.splitApprox ? '≈' : ''}${percent(show.split)} under 45`);
+            }
+            const who = el('span', 'who');
+            who.append(el('span', 'name', show.name), el('span', 'meta', meta.join(' · ')));
+
+            const fly = el('span', 'fly');
+            fly.append(renderHalf(show, 'Alle 45', 'left', scale, index), el('span', 'axis'),
+                renderHalf(show, '45+', 'right', scale, index));
+            button.append(pos, who, fly);
+            li.appendChild(button);
+            return li;
+        }
+
+        function renderHalf(show, demo, side, scale, index) {
+            const half = el('span', `half ${side}`);
+            const group = demo === 'Alle 45' ? 'Under 45' : '45+';
+            const value = show.values[demo];
+            const entry = show.demos[demo];
+            const val = el('span', 'val');
+            if (value === null) {
+                const ceiling = show.ceilings[demo];
+                val.classList.add('missing');
+                val.textContent = ceiling ? `≤${thousands(ceiling)}` : '–';
+                half.dataset.tip = `${group}: not in the ${demo} list (${notListedText(show, demo)} viewers)`;
+                half.appendChild(val);
+                return half;
+            }
+            const bar = el('span', entry ? 'bar' : 'bar approx');
+            bar.style.setProperty('--w', String(value / scale));
+            bar.style.setProperty('--delay', `${Math.min(index, topRows) * 25}ms`);
+            const amount = el('span', null, `${entry ? '' : '≈'}${thousands(value)}`);
+            if (entry) {
+                const chip = el('b', `rk ${rankShade(entry.rank)}`, `#${entry.rank}`);
+                side === 'left' ? val.append(amount, chip) : val.append(chip, amount);
+                half.dataset.tip = `${group}: ${entry.viewers.toLocaleString()} viewers · #${entry.rank} in ${demo}`;
+            } else {
+                val.appendChild(amount);
+                half.dataset.tip = `${group}: ≈${value.toLocaleString()} viewers, worked out as ${show.derived[demo]}`;
+            }
+            side === 'left' ? half.append(val, bar) : half.append(bar, val);
+            return half;
         }
 
         function toggleDetail(key) {
+            const list = document.getElementById('pyramid');
+            const open = list.querySelector('.detail-item');
+            if (open) open.remove();
+            list.querySelectorAll('.row-btn[aria-expanded="true"]').forEach(button => button.setAttribute('aria-expanded', 'false'));
             openShowKey = openShowKey === key ? null : key;
-            updateCompare();
-            const row = [...document.querySelectorAll('#compareBody tr.show-row')].find(tr => tr.dataset.key === key);
-            if (row) row.focus();
+            const row = [...list.children].find(li => li.dataset.key === key);
+            const show = comparison.find(item => item.key === key);
+            if (!openShowKey || !row || !show) return;
+            row.after(renderDetail(show));
+            row.querySelector('.row-btn').setAttribute('aria-expanded', 'true');
         }
 
-        function renderShowRow(show, maxViewers, average) {
-            const tr = el('tr', 'show-row');
-            tr.dataset.key = show.key;
-            tr.tabIndex = 0;
-            tr.setAttribute('aria-expanded', String(show.key === openShowKey));
-            tr.addEventListener('click', () => toggleDetail(show.key));
-            tr.addEventListener('keydown', event => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    toggleDetail(show.key);
-                }
-            });
-
-            const nameCell = el('td', 'c-show');
-            nameCell.append(el('div', 'show-name', show.name), el('div', 'show-service', show.service));
-
-            const sizeCell = el('td', 'c-size');
-            sizeCell.dataset.label = '3+ viewers';
-            const total = show.values['3+'];
-            if (total !== null) {
-                const size = el('div', 'size-bar');
-                const fill = el('span', 'fill');
-                fill.style.width = `calc((100% - 3.5em) * ${total / maxViewers})`;
-                const approx = '3+' in show.derived ? '≈' : '';
-                size.append(fill, el('span', 'value', approx + thousands(total)));
-                size.dataset.tip = approx
-                    ? `≈${total.toLocaleString()} viewers aged 3+ (Alle 45 plus 45+; not in the 3+ list)`
-                    : `${total.toLocaleString()} viewers aged 3+`;
-                sizeCell.appendChild(size);
-            } else {
-                sizeCell.appendChild(el('span', 'split-missing', `Not in the 3+ list (${notListedText(show, '3+')})`));
+        // Highlight tiles jump to their show, expanding the list if it sits below the top rows
+        function openShow(key) {
+            if (!showAllRows && shownShows().findIndex(show => show.key === key) >= topRows) {
+                showAllRows = true;
+                updateCompare();
             }
-
-            const ranksCell = el('td', 'c-ranks');
-            ranksCell.dataset.label = 'Rank in each demo';
-            const labels = el('div', 'rank-grid rank-labels');
-            const grid = el('div', 'rank-grid');
-            demoOrder.forEach(demo => {
-                labels.appendChild(el('span', 'rank-head', demo));
-                const entry = show.demos[demo];
-                let cell;
-                if (entry) {
-                    const shade = entry.rank <= 10 ? 'top' : entry.rank <= 30 ? 'mid' : 'low';
-                    cell = el('span', `rank-cell ${shade}`, String(entry.rank));
-                    cell.dataset.tip = `#${entry.rank} in ${demo} · ${entry.viewers.toLocaleString()} viewers`;
-                } else {
-                    cell = el('span', 'rank-cell none', '–');
-                    cell.dataset.tip = `Not in the ${demo} list: ${notListedText(show, demo)} viewers`;
-                }
-                grid.appendChild(cell);
-            });
-            ranksCell.append(labels, grid);
-
-            const splitCell = el('td', 'c-split');
-            splitCell.dataset.label = 'Audience: under 45 vs 45+';
-            if (show.split !== null) {
-                const approx = show.splitApprox ? '≈' : '';
-                const split = el('div', 'split');
-                const bar = el('div', 'split-bar');
-                [['Alle 45', 'under45', show.split, 'Under 45'], ['45+', 'over45', 1 - show.split, '45+']]
-                    .forEach(([demo, className, share, label]) => {
-                        if (share <= 0) return;
-                        const seg = el('span', `seg ${className}`);
-                        seg.style.flex = `${share} 1 0`;
-                        const how = show.derived[demo] ? ` (worked out as ${show.derived[demo]})` : '';
-                        seg.dataset.tip = `${label}: ${approx}${show.values[demo].toLocaleString()} viewers, ${percent(share)}${how}`;
-                        bar.appendChild(seg);
-                    });
-                if (average !== null) {
-                    const marker = el('i', 'avg');
-                    marker.style.left = `${average * 100}%`;
-                    marker.dataset.tip = `Average of the shows listed: ${percent(average)} under 45`;
-                    bar.appendChild(marker);
-                }
-                split.append(
-                    el('span', 'split-value left', approx + percent(show.split)),
-                    bar,
-                    el('span', 'split-value', approx + percent(1 - show.split)));
-                splitCell.appendChild(split);
-            } else {
-                splitCell.appendChild(el('span', 'split-missing', 'Not enough data for the split'));
+            openShowKey = null;
+            toggleDetail(key);
+            const row = [...document.getElementById('pyramid').children].find(li => li.dataset.key === key);
+            if (row) {
+                row.scrollIntoView({block: 'start', behavior: 'smooth'});
+                row.querySelector('.row-btn').focus({preventScroll: true});
             }
-
-            const shareCell = el('td', 'c-share num');
-            shareCell.dataset.label = 'Share 25-64';
-            shareCell.textContent = show.share2564 !== null
-                ? ('3+' in show.derived ? '≈' : '') + percent(show.share2564)
-                : '–';
-
-            tr.append(nameCell, sizeCell, ranksCell, splitCell, shareCell);
-            return tr;
         }
 
-        function renderDetailRow(show) {
-            const tr = el('tr', 'detail-row');
-            const td = el('td');
-            td.colSpan = 5;
-            const detail = el('div', 'detail');
-            detail.appendChild(el('h3', null, `${show.name} · ${show.service}`));
+        function renderDetail(show) {
+            const li = el('li', 'detail-item');
+            const card = el('div', 'detail');
 
             // Ruutu lists name the episode; say it once when every list shows the same one
-            const listed = [...new Set(Object.values(show.demos).map(entry => entry.program))];
-            const sharedEpisode = listed.length === 1 && listed[0] !== show.name ? listed[0] : null;
-            if (sharedEpisode) {
-                detail.appendChild(el('p', 'detail-note', `Most-watched episode in every list: ${sharedEpisode}`));
+            const programs = [...new Set(Object.values(show.demos).map(entry => entry.program))];
+            const sharedEpisode = programs.length === 1 && programs[0] !== show.name ? programs[0] : null;
+
+            const top = el('div', 'detail-top');
+            const title = el('div');
+            title.append(el('h3', null, show.name),
+                el('div', 'detail-meta', sharedEpisode ? `${show.service} · Most-watched episode: ${sharedEpisode}` : show.service));
+            const hero = el('div', 'hero');
+            if (show.values['3+'] !== null) {
+                hero.append(el('span', 'hero-num', `${'3+' in show.derived ? '≈' : ''}${show.values['3+'].toLocaleString()}`),
+                    el('span', 'hero-label', 'viewers aged 3+'));
+            } else {
+                hero.append(el('span', 'hero-label', `Not in the 3+ list (${notListedText(show, '3+')} viewers)`));
+            }
+            top.append(title, hero);
+            card.appendChild(top);
+
+            if (show.split !== null) {
+                const approx = show.splitApprox ? '≈' : '';
+                const split = el('div', 'split-big');
+                const left = el('span', 'pct', approx + percent(show.split));
+                left.appendChild(el('small', null, 'under 45'));
+                const right = el('span', 'pct right', approx + percent(1 - show.split));
+                right.appendChild(el('small', null, '45 or older'));
+                split.append(left, splitTrack(show.split, 'split-track'), right);
+                card.appendChild(split);
+            } else {
+                card.appendChild(el('p', 'detail-note', 'Not enough data to split this audience by age.'));
             }
 
-            const grid = el('div', 'detail-grid');
-            const headers = ['Demo', '', 'Viewers', 'Rank', 'Episode / note'].map((text, index) =>
-                el('span', index === 4 ? 'head episode' : 'head', text));
-            grid.append(...headers);
-            let anyNote = false;
-            const max = Math.max(1, ...demoOrder.map(demo => show.values[demo] || 0));
-            const barClass = {'Alle 45': 'under45', '45+': 'over45'};
+            const ranks = Object.values(show.demos).map(entry => entry.rank);
+            const bestRank = ranks.length ? Math.min(...ranks) : null;
+            const tiles = el('div', 'rank-tiles');
+            const tileClass = {'Alle 45': 'under45', '45+': 'over45'};
+            const tileLabel = {'3+': '3+ (all viewers)', 'Alle 45': 'Alle 45', '45+': '45+', '25-64': '25-64'};
             demoOrder.forEach(demo => {
                 const entry = show.demos[demo];
                 const value = show.values[demo];
-                const bar = el('div', `detail-bar ${barClass[demo] || ''}`);
-                bar.style.width = value ? `${(value / max) * 100}%` : '0';
-                let valueText;
-                let note;
+                const tile = el('div', `rank-tile ${tileClass[demo] || ''}`);
+                tile.append(el('span', 'big', entry ? `#${entry.rank}` : '–'), el('span', 'lbl', tileLabel[demo]));
                 if (entry) {
-                    valueText = entry.viewers.toLocaleString();
-                    note = entry.program !== show.name && !sharedEpisode ? entry.program : '';
+                    tile.appendChild(el('span', 'sub', `${entry.viewers.toLocaleString()} viewers`));
+                    if (!sharedEpisode && entry.program !== show.name) {
+                        tile.appendChild(el('span', 'episode', entry.program));
+                    }
+                    if (entry.rank === bestRank && ranks.length > 1) {
+                        tile.appendChild(el('span', 'badge', 'Best'));
+                    }
                 } else if (value !== null) {
-                    valueText = `≈${value.toLocaleString()}`;
-                    note = `Not in the list; worked out as ${show.derived[demo]}`;
+                    tile.appendChild(el('span', 'sub', `≈${value.toLocaleString()} viewers (${show.derived[demo]})`));
                 } else {
-                    valueText = notListedText(show, demo);
-                    note = 'Not in the list';
+                    tile.appendChild(el('span', 'sub', `Not in the list: ${notListedText(show, demo)}`));
                 }
-                anyNote = anyNote || note !== '';
-                grid.append(
-                    el('span', null, demo),
-                    bar,
-                    el('span', 'num', valueText),
-                    el('span', 'num', entry ? `#${entry.rank}` : '–'),
-                    el('span', 'episode detail-note', note));
+                tiles.appendChild(tile);
             });
-            if (!anyNote) headers[4].textContent = '';
-            detail.appendChild(grid);
+            card.appendChild(tiles);
 
-            if (show.split !== null) {
-                const approx = show.splitApprox ? '≈' : '';
-                let summary = `${approx}${percent(show.split)} of the viewers are under 45 and ${approx}${percent(1 - show.split)} are 45 or older.`;
-                if (show.share2564 !== null) {
-                    summary += ` ${percent(show.share2564)} are 25–64.`;
-                }
-                detail.appendChild(el('p', 'detail-summary', summary));
+            const notes = [];
+            if (show.share2564 !== null) {
+                notes.push(`${'3+' in show.derived ? '≈' : ''}${percent(show.share2564)} of the viewers are 25–64.`);
             }
             if (show.mismatch) {
-                detail.appendChild(el('p', 'detail-note',
-                    'The 3+, Alle 45 and 45+ lists show different episodes of this show, so the split is approximate.'));
+                notes.push('The 3+, Alle 45 and 45+ lists show different episodes of this show, so the split is approximate.');
             } else if (Object.keys(show.derived).length > 0) {
-                detail.appendChild(el('p', 'detail-note',
-                    '≈ figures are worked out from the other groups: Alle 45 and 45+ together make up the 3+ audience.'));
+                notes.push('≈ figures are worked out from the other groups: under 45 and 45+ together make up the 3+ audience.');
+            }
+            if (notes.length) {
+                card.appendChild(el('p', 'detail-note', notes.join(' ')));
             }
 
-            td.appendChild(detail);
-            tr.appendChild(td);
-            return tr;
+            li.appendChild(card);
+            return li;
         }
 
         const tooltip = document.getElementById('tooltip');
@@ -844,8 +1007,19 @@
 
         document.getElementById('viewList').addEventListener('click', () => setView('list'));
         document.getElementById('viewCompare').addEventListener('click', () => setView('compare'));
-        document.getElementById('compareSort').addEventListener('change', updateCompare);
+        document.querySelectorAll('#compareSort button').forEach(button => {
+            button.addEventListener('click', () => {
+                compareSort = button.dataset.sort;
+                document.querySelectorAll('#compareSort button').forEach(other =>
+                    other.setAttribute('aria-pressed', String(other === button)));
+                updateCompare();
+            });
+        });
         document.getElementById('includeOutside').addEventListener('change', updateCompare);
+        document.getElementById('showAll').addEventListener('click', () => {
+            showAllRows = !showAllRows;
+            updateCompare();
+        });
         document.getElementById('service').addEventListener('change', render);
         document.getElementById('demo').addEventListener('change', updateTable);
         document.getElementById('dateSelect').addEventListener('change', fetchData);

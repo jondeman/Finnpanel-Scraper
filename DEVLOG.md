@@ -7,13 +7,15 @@ and why each decision went the way it did. Newest first.
 
 ## 2026-10-07 — Compare demos view
 
-Branch `claude/compare-demos` · dashboard only, no scraper change
+Dashboard only, no scraper change.
 
 ### Why
 
 The first demo release had a "Compare all demos" option that listed all 240
 rows one demo after another. The first 60 rows were the 3+ list, so the view
-looked identical to 3+ and compared nothing.
+looked identical to 3+ and compared nothing. The brief for its replacement:
+show how each show ranks in each demo and what its audience is made of, very
+visually, with a simple UI.
 
 ### What the data supports
 
@@ -34,35 +36,58 @@ Measured on the 2026-10-07 files before designing anything:
   groups up to 42k off the 3+ figure, so those splits are marked ≈.
 - **Some shows only make one demo's list**: 26 in the 14-day file.
 
-### Decisions worth recording
+### Design
 
-**A List / Compare demos switch, not a dropdown option.** One row per show:
-3+ viewers, rank in each demo, under 45 vs 45+ split, share aged 25–64. A row
-opens a detail card with the figures side by side.
+**A List / Compare demos switch**, replacing the dropdown option. The
+comparison has three parts:
+
+1. **Four highlight cards**: biggest show with under-45s, biggest with 45+,
+   youngest audience, oldest audience. Each jumps to its show.
+2. **A butterfly chart**, one row per show: under-45 viewers to the left in
+   blue, 45+ viewers to the right in orange, from a shared centre line on one
+   scale. A row's total width is the show's size; its balance is the audience
+   mix. Each bar end carries the viewers and the show's rank in that group; the
+   big number on the left is its rank among all viewers. Top 20 by default.
+3. **A detail card** per show: total viewers as the one large figure, a large
+   under-45/45+ split bar, and one rank card per demo with the best marked.
+
+Sorting is one row of buttons (Total, Under 45, 45+, Youngest, Oldest). A
+table-based first draft with a separate size bar, rank grid and split bar was
+replaced by the butterfly, which shows size and mix in one mark.
+
+### Decisions worth recording
 
 **Colour only for the two age groups.** Under 45 blue `#2a78d6`, 45+ orange
 `#eb6834`, everywhere they appear. Validated, not eyeballed: CVD ΔE 24.7,
-normal-vision ΔE 33.6, both ≥3:1 on white. Everything else is grey.
+normal-vision ΔE 33.6, both ≥3:1 on white. Everything else is grey or the
+page's own navy.
 
 **Three rank shades, not five.** The middle grey `#898781` carries small text at
-neither 4.5:1 with white (3.59) nor with dark ink (4.17), so ranks use 1–10,
-11–30 and 31–60.
+neither 4.5:1 with white (3.59) nor with dark ink (4.17), so rank chips use
+1–10, 11–30 and 31–60.
 
-**Percentages sit outside the split bar**, so an 8% or 0% slice never needs a
-clipped label. A marker shows the average split of the shows listed, so
-"skews young" means younger than a typical show, not younger than 50/50.
+**Worked-out figures are drawn faded and marked ≈**; figures off a list show
+their ceiling (≤15k) with no bar, so nothing is drawn that isn't known.
 
-**Tooltips only add detail.** Every value is also in the row or the card.
+**Every bar is labelled**, so the chart needs no gridlines or axis ticks.
+Tooltips only add detail; every value is also on the row or in the card.
+
+**Bars grow in once per render** (staggered, 0.7s); switched off under
+`prefers-reduced-motion`. Opening a card inserts it without re-rendering, so
+the chart doesn't re-animate on every click.
 
 ### Verification
 
 | Check | Result |
 |---|---|
-| Browser test on the real 2026-10-07 files | Figures match the analysis: Salatut elämät ranks 1/4/4/1, 48%/52%, 71% aged 25–64; Cooper ja Fry ≈8%/≈92% with "at most 11,000" for Alle 45 |
-| Sorting | Youngest first: Pikku Kakkonen, Ryhmä Hau, Tuuri. Oldest first: La Promesa, Grantchester |
-| Demo-only shows toggle | 60 → 86 shows |
-| Pre-demo date | Explains that demo data starts 2026-10-07 instead of an empty table |
-| Phone width (390px) | Rows become cards; no sideways scroll |
+| Browser test on the real 2026-10-07 files | Salatut elämät: #1, 96k #4 under 45, 105k #4 45+, 48% under 45. Cooper ja Fry: ≈11k under 45 (faded), 134k #1 45+ |
+| Highlight cards | Erikoisjoukot 118k, Cooper ja Fry 134k, Pikku Kakkonen ≈94% under 45, La Promesa ≈100% 45+; with a service filter they show the real rank (Yle: Tuuri #5 in Alle 45) |
+| Sorting | Under 45: Erikoisjoukot first. 45+: Cooper ja Fry. Youngest: Pikku Kakkonen, Ryhmä Hau, Tuuri. Oldest: La Promesa, Grantchester |
+| Card jump below the top 20 | Pikku Kakkonen (#42) expands the list and opens its card |
+| Demo-only shows | Nahkametsä: 19k #26 under 45, ≤15k 45+, no 3+ rank |
+| Labels | No bar label overflows its half, desktop or 390px |
+| Phone width (390px) | No sideways scroll |
+| Pre-demo date | Explains that demo data starts 2026-10-07 |
 | List view | Existing test updated for the removed dropdown option; passes |
 
 ### Follow-ups
@@ -77,6 +102,8 @@ clipped label. A marker shows the average split of the shows listed, so
 
 - Ranks are across all three services within a demo, as in the data files.
 - The view works only from 2026-10-07, the first day with demo data.
+- The 25–64 group overlaps both halves of the butterfly, so it appears only in
+  the detail card.
 
 ---
 
