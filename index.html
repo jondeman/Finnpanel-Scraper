@@ -73,6 +73,12 @@
             margin-bottom: 10px; 
             color: var(--accent-grey);
         }
+        #demoNote {
+            display: none;
+            margin-top: 8px;
+            font-size: 0.92rem;
+            color: #555;
+        }
         table { 
             border-collapse: collapse; 
             width: 100%; 
@@ -140,7 +146,9 @@
             <option value="MTV Katsomo">MTV Katsomo</option>
             <option value="Yle Areena">Yle Areena</option>
         </select>
+        <select id="demo" title="Target group (kohderyhmä)"></select>
         <button onclick="downloadXLSX()">Download Data</button>
+        <div id="demoNote">Only the 3+ demo was collected for this date.</div>
     </div>
 
     <div id="loading">Loading data...</div>
@@ -149,6 +157,7 @@
         <thead>
             <tr>
                 <th>Date</th>
+                <th>Demo</th>
                 <th>Rank</th>
                 <th>Service</th>
                 <th>Program</th>
@@ -167,6 +176,9 @@
     <script>
         let allData = [];
         const baseUrl = 'https://raw.githubusercontent.com/jondeman/Finnpanel-Scraper/main/';
+        // Demos in the order the scraper writes them; files from before the demo split only have 3+
+        const demoOrder = ['3+', 'Alle 45', '45+', '25-64'];
+        const allDemos = 'all';
 
         // Set default date to yesterday
         const yesterday = new Date(new Date().setDate(new Date().getDate() - 1));
@@ -223,8 +235,10 @@
                         headers.forEach((header, index) => {
                             obj[header] = row[index];
                         });
+                        obj.Demo = obj.Demo || '3+';
                         return obj;
                     });
+                    updateDemoOptions();
                     updateTable();
                 } else {
                     console.error(`No data available for ${formattedDate}`);
@@ -237,10 +251,40 @@
             document.getElementById('loading').style.display = 'none';
         }
 
+        function demoSortKey(demo) {
+            const index = demoOrder.indexOf(demo);
+            return index === -1 ? demoOrder.length : index;
+        }
+
+        // Offer only the demos present in the loaded file, keeping the current choice when possible
+        function updateDemoOptions() {
+            const select = document.getElementById('demo');
+            const previous = select.value || '3+';
+            const available = [...new Set(allData.map(row => row.Demo))]
+                .sort((a, b) => demoSortKey(a) - demoSortKey(b));
+
+            select.innerHTML = '';
+            available.forEach(demo => select.add(new Option(`Demo: ${demo}`, demo)));
+            if (available.length > 1) {
+                select.add(new Option('Compare all demos', allDemos));
+            }
+            select.value = previous;
+            if (!select.value && available.length > 0) {
+                select.value = available.includes('3+') ? '3+' : available[0];
+            }
+
+            const onlyAllViewers = available.length === 1 && available[0] === '3+';
+            document.getElementById('demoNote').style.display = onlyAllViewers ? 'block' : 'none';
+        }
+
         function updateTable() {
             const service = document.getElementById('service').value;
+            const demo = document.getElementById('demo').value;
             
             let filteredData = allData;
+            if (demo !== allDemos) {
+                filteredData = filteredData.filter(row => row.Demo === demo);
+            }
             if (service !== 'all') {
                 filteredData = filteredData.filter(row => row.Service === service);
             }
@@ -251,6 +295,7 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${row.Date || ''}</td>
+                    <td>${row.Demo || ''}</td>
                     <td>${row.Rank || ''}</td>
                     <td>${row.Service || ''}</td>
                     <td>${row.Program || ''}</td>
@@ -262,6 +307,7 @@
         }
 
         document.getElementById('service').addEventListener('change', updateTable);
+        document.getElementById('demo').addEventListener('change', updateTable);
         document.getElementById('dateSelect').addEventListener('change', fetchData);
         document.getElementById('dataRange').addEventListener('change', fetchData);
 
