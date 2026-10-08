@@ -5,6 +5,19 @@ and why each decision went the way it did. Newest first.
 
 ---
 
+## 2026-10-08 — Compare demos: highlight cards removed
+
+Dashboard only. The four highlight cards at the top of Compare demos weren't
+needed; the view now opens straight on the sort bar and the butterfly chart.
+The same answers are one click away: sorting by Under 45, 45+, Youngest or
+Oldest puts each card's show first.
+
+Browser check on the 2026-10-07 14-day file: the chart, row detail cards and
+sorting work as before (Youngest: Pikku Kakkonen first), no console errors, no
+sideways scroll at 390px.
+
+---
+
 ## 2026-10-07 — Compare demos view
 
 Dashboard only, no scraper change.

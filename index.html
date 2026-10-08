@@ -147,37 +147,6 @@
             color: var(--muted-text);
             box-shadow: 0 1px 7px #0001;
         }
-        .highlights {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 12px;
-            margin-bottom: 18px;
-        }
-        .tile {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            margin: 0;
-            padding: 14px 16px;
-            border: 1px solid var(--border-grey);
-            border-top: 4px solid var(--rank-mid);
-            border-radius: 10px;
-            background: var(--white);
-            color: var(--accent-grey);
-            box-shadow: 0 1px 7px #0001;
-            text-align: left;
-            font: inherit;
-            transition: transform 0.15s, box-shadow 0.15s;
-        }
-        .tile:hover { background: var(--white); transform: translateY(-2px); box-shadow: 0 4px 14px #0002; }
-        .tile.under45 { border-top-color: var(--under45); }
-        .tile.over45 { border-top-color: var(--over45); }
-        .tile-label { font-size: 0.82rem; color: var(--muted-text); }
-        .tile-value { margin: 6px 0 2px; font-size: 2rem; font-weight: bold; line-height: 1.1; color: var(--main-blue); }
-        .tile-value small { font-size: 0.85rem; font-weight: normal; color: var(--muted-text); }
-        .tile-show { font-weight: bold; overflow-wrap: anywhere; }
-        .tile-meta { font-size: 0.85rem; color: var(--muted-text); }
-        .mini-split { display: flex; gap: 2px; width: 100%; height: 6px; margin: 4px 0 6px; }
         .compare-toolbar {
             display: flex;
             flex-wrap: wrap;
@@ -269,7 +238,6 @@
         @keyframes rise { from { opacity: 0; transform: translateY(-6px); } }
         @media (prefers-reduced-motion: reduce) {
             .bar, .detail { animation: none; }
-            .tile { transition: none; }
         }
         .show-all {
             display: block;
@@ -364,9 +332,6 @@
             th, td { font-size: 0.94rem; }
             .controls { font-size: 0.97rem; }
             /* Comparison on phones */
-            .highlights { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-            .tile { padding: 10px 12px; }
-            .tile-value { font-size: 1.5rem; }
             .pyramid { padding: 4px 8px 12px; }
             .pyramid-head, .row-btn { grid-template-columns: 1.9em minmax(0, 1fr); column-gap: 8px; }
             .pyramid-head .fly, .row-btn .fly { grid-column: 1 / -1; }
@@ -424,7 +389,6 @@
     <section id="compareView" hidden>
         <div id="compareMessage" hidden></div>
         <div id="compareContent">
-            <div class="highlights" id="highlights"></div>
             <div class="compare-toolbar">
                 <span class="toolbar-label">Sort by</span>
                 <div class="segmented" id="compareSort" role="group" aria-label="Sort shows">
@@ -753,7 +717,6 @@
             content.hidden = false;
 
             const shows = shownShows();
-            renderHighlights(shows);
 
             // One scale for both sides so under-45 and 45+ bars compare directly
             const scale = Math.max(1, ...shows.map(show =>
@@ -770,45 +733,6 @@
             const more = document.getElementById('showAll');
             more.hidden = shows.length <= topRows;
             more.textContent = showAllRows ? `Show top ${topRows}` : `Show all ${shows.length} shows`;
-        }
-
-        function renderHighlights(shows) {
-            const box = document.getElementById('highlights');
-            box.innerHTML = '';
-            const pick = (score) => shows
-                .filter(show => score(show) !== null)
-                .sort((a, b) => score(b) - score(a) || (b.values['3+'] ?? 0) - (a.values['3+'] ?? 0))[0];
-            const listed = demo => show => show.demos[demo] ? show.demos[demo].viewers : null;
-            const youngest = pick(show => show.split);
-            const oldest = pick(show => show.split === null ? null : 1 - show.split);
-            const tiles = [
-                {label: 'Biggest with under 45s', className: 'under45', show: pick(listed('Alle 45')),
-                    value: show => thousands(show.demos['Alle 45'].viewers), unit: 'viewers',
-                    meta: show => `${show.service} · #${show.demos['Alle 45'].rank} in Alle 45`},
-                {label: 'Biggest with 45+', className: 'over45', show: pick(listed('45+')),
-                    value: show => thousands(show.demos['45+'].viewers), unit: 'viewers',
-                    meta: show => `${show.service} · #${show.demos['45+'].rank} in 45+`},
-                {label: 'Youngest audience', show: youngest, split: true,
-                    value: show => (show.splitApprox ? '≈' : '') + percent(show.split), unit: 'under 45',
-                    meta: show => show.service},
-                {label: 'Oldest audience', show: oldest, split: true,
-                    value: show => (show.splitApprox ? '≈' : '') + percent(1 - show.split), unit: '45+',
-                    meta: show => show.service},
-            ];
-            tiles.forEach(tile => {
-                if (!tile.show) return;
-                const button = el('button', `tile ${tile.className || ''}`);
-                button.type = 'button';
-                const value = el('span', 'tile-value', tile.value(tile.show));
-                value.appendChild(el('small', null, ` ${tile.unit}`));
-                button.append(el('span', 'tile-label', tile.label), value);
-                if (tile.split) {
-                    button.appendChild(splitTrack(tile.show.split, 'mini-split'));
-                }
-                button.append(el('span', 'tile-show', tile.show.name), el('span', 'tile-meta', tile.meta(tile.show)));
-                button.addEventListener('click', () => openShow(tile.show.key));
-                box.appendChild(button);
-            });
         }
 
         function splitTrack(split, className) {
@@ -893,21 +817,6 @@
             if (!openShowKey || !row || !show) return;
             row.after(renderDetail(show));
             row.querySelector('.row-btn').setAttribute('aria-expanded', 'true');
-        }
-
-        // Highlight tiles jump to their show, expanding the list if it sits below the top rows
-        function openShow(key) {
-            if (!showAllRows && shownShows().findIndex(show => show.key === key) >= topRows) {
-                showAllRows = true;
-                updateCompare();
-            }
-            openShowKey = null;
-            toggleDetail(key);
-            const row = [...document.getElementById('pyramid').children].find(li => li.dataset.key === key);
-            if (row) {
-                row.scrollIntoView({block: 'start', behavior: 'smooth'});
-                row.querySelector('.row-btn').focus({preventScroll: true});
-            }
         }
 
         function renderDetail(show) {
