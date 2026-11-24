@@ -9,8 +9,9 @@ const DATA_BASE = IS_LOCAL ? '' : RAW_BASE;
 
 // Demos in the order the scrapers write them; files from before 2026-10-07 only have 3+
 const DEMO_ORDER = ['3+', 'Alle 45', '45+', '25-64'];
-const DEMO_LABELS = {'3+': '3+ (all viewers)', 'Alle 45': 'Under 45', '45+': '45+', '25-64': '25–64'};
-const DEMO_SHORT = {'3+': 'all viewers', 'Alle 45': 'under 45', '45+': '45+', '25-64': '25–64'};
+// Finnpanel's names for its target groups (kohderyhmät), long and short
+const DEMO_LABELS = {'3+': 'Kaikki 3 vuotta täyttäneet', 'Alle 45': 'Alle 45-vuotiaat', '45+': '45 vuotta täyttäneet', '25-64': '25–64-vuotiaat'};
+const DEMO_SHORT = {'3+': '3+', 'Alle 45': 'Alle 45', '45+': '45+', '25-64': '25–64'};
 
 // Broadcaster groups: TotalTV lists are per group, online lists per streaming service,
 // linear broadcasts per channel. The key ties the three together.
@@ -27,6 +28,16 @@ Object.entries(GROUPS).forEach(([key, names]) => {
 
 function groupKeyOf(name) {
     return GROUP_KEY_BY_NAME[name] || '';
+}
+
+// "Ruudun listalla", "MTV:n listalla": Finnish genitives of the services and groups
+const GENITIVES = {
+    'Yle': 'Ylen', 'MTV': 'MTV:n', 'Sanoma': 'Sanoman',
+    'Yle Areena': 'Yle Areenan', 'MTV Katsomo': 'MTV Katsomon', 'Ruutu': 'Ruudun',
+};
+
+function genitive(name) {
+    return GENITIVES[name] || `${name}:n`;
 }
 
 // The programme name without what changes between episodes. Ruutu (and Sanoma's TotalTV list)
@@ -56,6 +67,12 @@ function ruutuEpisode(program) {
     const found = String(program || '').match(/ - Kausi (\d+)(?: - Jakso (\d+))?(?: (\d{1,2}\.\d{1,2}\.\d{4}))?/);
     if (!found) return null;
     return {season: Number(found[1]), episode: found[2] ? Number(found[2]) : null, published: found[3] || null};
+}
+
+// "kausi 17, jakso 3, julkaistu 23.03.2026"
+function episodeLabel(episode) {
+    return [`kausi ${episode.season}`, episode.episode ? `jakso ${episode.episode}` : null,
+        episode.published ? `julkaistu ${episode.published}` : null].filter(Boolean).join(', ');
 }
 
 // RFC 4180 CSV, as written by Python's csv module
@@ -223,6 +240,11 @@ function loadHistory() {
                 // The most used spelling, preferring a name that was not cut off
                 title.name = [...title.names.entries()]
                     .sort((a, b) => b[1] - a[1] || b[0].length - a[0].length)[0][0];
+                // What the search shows next to the name
+                const dates = [...title.totaltv, ...title.online, ...title.tv].map(row => row.Date).filter(Boolean);
+                title.lastDate = dates.reduce((latest, day) => (day > latest ? day : latest), '');
+                title.where = [...new Set([...title.totaltv.map(row => row.Group), ...title.online.map(row => row.Service),
+                    ...title.tv.map(row => row.Channel)])];
             });
             const listDates = {
                 online: [...new Set(online.map(row => row.Date))].sort(),
@@ -250,22 +272,29 @@ function link(href, text, className) {
     return anchor;
 }
 
+// Numbers the Finnish way: 1 023 000, 84 t., 1,02 milj., 7 %
+const NBSP = '\u00a0';
+
 function thousands(value) {
-    return `${Math.round(value / 1000)}k`;
+    return `${Math.round(value / 1000)}${NBSP}t.`;
 }
 
 function compact(value) {
-    if (value >= 1e6) return `${parseFloat((value / 1e6).toFixed(2))}M`;
-    if (value >= 1000) return `${Math.round(value / 1000)}k`;
+    if (value >= 1e6) return `${(value / 1e6).toLocaleString('fi-FI', {maximumFractionDigits: 2})}${NBSP}milj.`;
+    if (value >= 1000) return thousands(value);
     return String(value);
 }
 
 function percent(share) {
-    return `${Math.round(share * 100)}%`;
+    return `${Math.round(share * 100)}${NBSP}%`;
 }
 
 function fullNumber(value) {
-    return Number(value).toLocaleString('en-US');
+    return Number(value).toLocaleString('fi-FI');
+}
+
+function decimal(value, digits = 2) {
+    return Number(value).toLocaleString('fi-FI', {minimumFractionDigits: digits, maximumFractionDigits: digits});
 }
 
 function isoDate(date) {
@@ -296,7 +325,7 @@ function windowText(start, end) {
     return `${finnishDate(start, false)}–${finnishDate(end)}`;
 }
 
-const WEEKDAY_NAMES = {ma: 'Mon', ti: 'Tue', ke: 'Wed', to: 'Thu', pe: 'Fri', la: 'Sat', su: 'Sun'};
+const WEEKDAY_NAMES = {ma: 'ma', ti: 'ti', ke: 'ke', to: 'to', pe: 'pe', la: 'la', su: 'su'};
 
 // The window a list covers. Lists collected since 2026-11-24 carry it; the xlsx archive did not,
 // and for those it is the 14 or 90 days ending two days before the list date, as the headers

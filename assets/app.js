@@ -1,24 +1,63 @@
-// Wiring: tabs, controls, routing between the list pages and title pages, and the title search.
-// Routes: #/online (default), #/totaltv, #/title/<title key>.
+// Wiring: tabs, filters, routing between the list pages and title pages, and the title search.
+// Routes: #/totaltv (default), #/online, #/title/<title key>. A list route carries its view and
+// filters (#/online?view=compare&demo=45%2B&service=mtv&period=90D&date=2026-11-01), so a link
+// opens the same view and the back button returns to it. No date means the newest list.
 
 const SOURCE_SETTINGS = {
-    online: {
-        subtitle: 'Yle Areenan, MTV Katsomon ja Ruudun katsotuimmat ohjelmat 2.9.24 alkaen',
-        allLabel: 'All services', groupLabel: names => names.online,
-        views: [['list', 'List'], ['compare', 'Compare demos']],
-    },
     totaltv: {
-        subtitle: 'Ylen, MTV:n ja Sanoman katsotuimmat ohjelmat, tv + verkko (Total TV) 24.11.26 alkaen',
-        allLabel: 'All broadcasters', groupLabel: names => names.group,
-        views: [['chart', 'TV + online'], ['list', 'List'], ['compare', 'Compare demos']],
+        subtitle: 'Ylen, MTV:n ja Sanoman katsotuimmat ohjelmat tv:ssä ja verkossa yhteensä',
+        serviceLabel: 'Mediatalo', names: key => GROUPS[key].group,
+    },
+    online: {
+        subtitle: 'Yle Areenan, MTV Katsomon ja Ruudun katsotuimmat ohjelmat',
+        serviceLabel: 'Palvelu', names: key => GROUPS[key].online,
     },
 };
+const VIEW_HELP = {
+    top: {
+        totaltv: 'Katsotuimmat ohjelmat tv:ssä ja verkossa yhteensä. Klikkaa ohjelmaa nähdäksesi sen koko historian.',
+        online: 'Katsotuimmat ohjelmat Yle Areenassa, MTV Katsomossa ja Ruudussa. Klikkaa ohjelmaa nähdäksesi sen koko historian.',
+    },
+    compare: {
+        totaltv: 'Ohjelmien yleisö jaettuna alle 45-vuotiaisiin ja 45 vuotta täyttäneisiin. Klikkaa riviä nähdäksesi tarkemmin.',
+        online: 'Ohjelmien yleisö jaettuna alle 45-vuotiaisiin ja 45 vuotta täyttäneisiin. Klikkaa riviä nähdäksesi tarkemmin.',
+    },
+    table: {
+        totaltv: 'Listan kaikki luvut taulukkona. Klikkaa riviä nähdäksesi ohjelman koko historian.',
+        online: 'Listan kaikki luvut taulukkona. Klikkaa riviä nähdäksesi ohjelman koko historian.',
+    },
+};
+const VIEWS = ['top', 'compare', 'table'];
 
-let lastListRoute = '#/online';
+let lastListRoute = '#/totaltv';
 let loadToken = 0;
+let loadedKey = '';
 
-function currentDate() {
-    return document.getElementById('dateSelect').value;
+// ---------------------------------------------------------------- routing and the URL
+
+function parseHash() {
+    const [path, query] = (location.hash || '#/totaltv').slice(1).split('?');
+    return {path, params: new URLSearchParams(query || '')};
+}
+
+function listHash(source = state.source) {
+    const params = new URLSearchParams();
+    if (state.view !== 'top') params.set('view', state.view);
+    if (state.filters.demo !== '3+') params.set('demo', state.filters.demo);
+    if (state.filters.service !== 'all') params.set('service', state.filters.service);
+    if (source === 'online' && state.filters.period !== '14D') params.set('period', state.filters.period);
+    if (state.filters.date) params.set('date', state.filters.date);
+    const query = params.toString();
+    return `#/${source}${query ? `?${query}` : ''}`;
+}
+
+// Records the current view in the address without adding a history entry for every click,
+// and keeps the other tab's link on the same filters
+function syncUrl() {
+    const hash = listHash();
+    if (location.hash !== hash) history.replaceState(null, '', hash);
+    lastListRoute = hash;
+    document.querySelectorAll('.tabs a').forEach(tab => { tab.href = listHash(tab.dataset.source); });
 }
 
 function showPage(page) {
@@ -30,57 +69,91 @@ function showPage(page) {
 }
 
 function route() {
-    const hash = location.hash || '#/online';
-    const titleMatch = hash.match(/^#\/title\/(.+)$/);
+    const {path, params} = parseHash();
     tooltip.hidden = true;
+    closeSearch();
+    const titleMatch = path.match(/^\/title\/(.+)$/);
     if (titleMatch) {
         showPage('title');
-        document.querySelectorAll('.tabs a').forEach(tab => tab.setAttribute('aria-current', 'false'));
         renderTitlePage(decodeURIComponent(titleMatch[1]));
         return;
     }
     document.title = 'Finnpanel Dashboard';
-    const source = hash.startsWith('#/totaltv') ? 'totaltv' : 'online';
-    lastListRoute = `#/${source}`;
-    const changed = source !== state.source || !state.loaded;
-    state.source = source;
+    state.source = path.startsWith('/online') ? 'online' : 'totaltv';
+    const view = params.get('view');
+    state.view = VIEWS.includes(view) ? view : 'top';
+    const demo = params.get('demo');
+    state.filters.demo = DEMO_ORDER.includes(demo) ? demo : '3+';
+    const service = params.get('service');
+    state.filters.service = service in GROUPS ? service : 'all';
+    state.filters.period = state.source === 'online' && params.get('period') === '90D' ? '90D' : '14D';
+    const date = params.get('date');
+    state.filters.date = /^\d{4}-\d{2}-\d{2}$/.test(date || '') ? date : '';
     showPage('lists');
-    if (changed) {
-        refreshControls();
+    refreshControls();
+    syncUrl();
+    const key = `${state.source}|${state.filters.period}|${state.filters.date}`;
+    if (key !== loadedKey) {
         fetchData();
     } else {
         render();
     }
 }
 
-function refreshControls() {
-    const settings = SOURCE_SETTINGS[state.source];
-    document.getElementById('subtitle').textContent = settings.subtitle;
-    document.getElementById('dataRange').hidden = state.source !== 'online';
+// ---------------------------------------------------------------- controls
 
-    const service = document.getElementById('service');
-    const previous = service.value || 'all';
-    service.innerHTML = '';
-    service.add(new Option(settings.allLabel, 'all'));
-    Object.entries(GROUPS).forEach(([key, names]) => service.add(new Option(settings.groupLabel(names), key)));
-    service.value = previous;
-
-    const views = document.getElementById('viewSwitch');
-    views.innerHTML = '';
-    settings.views.forEach(([view, label]) => {
+function fillSegmented(container, options, value, onChange) {
+    container.innerHTML = '';
+    options.forEach(({value: optionValue, label, disabled}) => {
         const button = el('button', null, label);
         button.type = 'button';
-        button.dataset.view = view;
-        button.setAttribute('aria-pressed', String(state.view[state.source] === view));
-        button.addEventListener('click', () => setView(view));
-        views.appendChild(button);
+        button.setAttribute('aria-pressed', String(optionValue === value));
+        if (disabled) {
+            button.disabled = true;
+            button.title = disabled;
+        }
+        button.addEventListener('click', () => onChange(optionValue));
+        container.appendChild(button);
     });
 }
 
-function setView(view) {
-    state.view[state.source] = view;
+function refreshControls() {
+    const settings = SOURCE_SETTINGS[state.source];
+    document.getElementById('subtitle').textContent = settings.subtitle;
+    document.getElementById('serviceLabel').textContent = settings.serviceLabel;
+
     document.querySelectorAll('#viewSwitch button').forEach(button =>
-        button.setAttribute('aria-pressed', String(button.dataset.view === view)));
+        button.setAttribute('aria-pressed', String(button.dataset.view === state.view)));
+    document.getElementById('viewHelp').textContent = VIEW_HELP[state.view][state.source];
+
+    fillSegmented(document.getElementById('periodSwitch'), [
+        {value: '14D', label: '14 päivää'},
+        {value: '90D', label: '90 päivää', disabled: state.source === 'totaltv' ? 'Total TV:stä Finnpanel julkaisee vain 14 päivän listan' : null},
+    ], state.filters.period, value => { state.filters.period = value; syncUrl(); fetchData(); });
+
+    fillSegmented(document.getElementById('serviceSwitch'), [
+        {value: 'all', label: 'Kaikki'},
+        ...Object.keys(GROUPS).map(key => ({value: key, label: settings.names(key)})),
+    ], state.filters.service, value => { state.filters.service = value; refreshControls(); syncUrl(); render(); });
+
+    const comparing = state.view === 'compare';
+    // On phones the filters fold behind one button that says what is chosen
+    const summary = [state.shownDate ? finnishDate(state.shownDate) : 'uusin', state.filters.period === '14D' ? '14 päivää' : '90 päivää',
+        state.filters.service === 'all' ? 'kaikki' : settings.names(state.filters.service),
+        comparing ? 'kaikki kohderyhmät' : (state.filters.demo === '3+' ? 'kaikki 3+' : DEMO_SHORT[state.filters.demo])];
+    document.getElementById('filtersSummary').textContent = summary.join(' · ');
+    fillSegmented(document.getElementById('demoSwitch'), DEMO_ORDER.map(demo => ({
+        value: demo,
+        label: demo === '3+' ? 'Kaikki 3+' : DEMO_SHORT[demo],
+        disabled: comparing ? 'Kohderyhmät-näkymä näyttää kaikki ryhmät'
+            : !state.demosAvailable.includes(demo) ? 'Tältä päivältä ei ole tämän kohderyhmän listaa (kerätään 7.10.2026 alkaen)' : null,
+    })), comparing ? null : state.filters.demo, value => { state.filters.demo = value; refreshControls(); syncUrl(); render(); });
+}
+
+function setView(view) {
+    state.view = view;
+    refreshControls();
+    syncUrl();
     render();
 }
 
@@ -98,61 +171,87 @@ function setMessage(text, action) {
     }
 }
 
+function showDate(date) {
+    state.filters.date = date;
+    syncUrl();
+    fetchData();
+}
+
+async function stepDay(direction) {
+    const manifest = await loadManifest();
+    const current = state.shownDate || manifest[state.source].last;
+    const next = addDays(current, direction);
+    showDate(next >= manifest[state.source].last ? '' : next);
+}
+
+function updateDateControls(manifest) {
+    const info = manifest[state.source];
+    const shown = state.shownDate || info.last;
+    const input = document.getElementById('dateSelect');
+    input.value = shown || '';
+    input.min = info.first || '';
+    input.max = info.last || '';
+    const atLatest = shown >= info.last;
+    document.getElementById('nextDay').disabled = atLatest;
+    document.getElementById('prevDay').disabled = !shown || shown <= info.first;
+    const latest = document.getElementById('latestDay');
+    latest.disabled = atLatest;
+    latest.textContent = atLatest ? 'Uusin lista' : 'Siirry uusimpaan';
+}
+
+// ---------------------------------------------------------------- loading and rendering
+
 async function fetchData() {
     const token = ++loadToken;
     const loading = document.getElementById('loading');
     loading.style.display = 'block';
     document.getElementById('listsBody').classList.add('refetching');
     setMessage('');
-    const date = currentDate();
     try {
         const manifest = await loadManifest();
+        const info = manifest[state.source];
+        const date = state.filters.date || info.last;
         const timeframe = document.getElementById('timeframe');
+        let shown = null;
+        let rows = [];
         if (state.source === 'online') {
-            const period = document.getElementById('dataRange').value;
-            const {date: shown, rows} = await loadListDay('online', date, row => row.Period === period);
-            if (token !== loadToken) return;
-            state.rows = rows;
-            if (!shown) {
-                timeframe.textContent = '';
-                setMessage(`Online lists are collected from ${finnishDate(manifest.online.first)}.`,
-                    {label: `Show ${finnishDate(manifest.online.first)}`, run: () => showDate(manifest.online.first)});
-            } else {
-                if (shown !== date) setMessage(`No online list for ${finnishDate(date)}; showing ${finnishDate(shown)}, the latest before it.`);
-                const window = rowWindow(rows[0]);
-                timeframe.textContent = `Window: ${windowText(window.start, window.end)} (list of ${finnishDate(shown)})`;
-            }
+            ({date: shown, rows} = await loadListDay('online', date, row => row.Period === state.filters.period));
         } else {
-            const {date: shown, rows: dayRows} = await loadListDay('totaltv', date);
-            if (token !== loadToken) return;
-            if (!shown) {
-                state.rows = [];
-                timeframe.textContent = '';
-                setMessage(`Total TV lists are collected from ${finnishDate(manifest.totaltv.first)}. Finnpanel publishes no archive, so earlier days do not exist.`,
-                    {label: `Show ${finnishDate(manifest.totaltv.first)}`, run: () => showDate(manifest.totaltv.first)});
-            } else {
-                if (shown !== date) {
-                    setMessage(`No Total TV list for ${finnishDate(date)}; showing ${finnishDate(shown)}, the latest before it.`);
-                }
-                const rows = dayRows.map(row => ({...row}));
+            const day = await loadListDay('totaltv', date);
+            shown = day.date;
+            if (shown) {
+                rows = day.rows.map(row => ({...row}));
                 const [online, broadcasts] = await Promise.all([
                     loadListDay('online', shown, row => row.Period === '14D').catch(() => ({rows: []})),
                     loadBroadcasts().catch(() => []),
                 ]);
-                if (token !== loadToken) return;
                 // Only the online list of the same day covers the same 14 days
                 enrichTotalTv(rows, online.date === shown ? online.rows : [], broadcasts);
-                state.rows = rows;
-                timeframe.textContent = `Window: ${windowText(rows[0].PeriodStart, rows[0].PeriodEnd)} (list of ${finnishDate(shown)})`;
             }
         }
-        state.loaded = true;
-        updateDemoOptions();
+        if (token !== loadToken) return;
+        state.rows = rows;
+        state.shownDate = shown;
+        loadedKey = `${state.source}|${state.filters.period}|${state.filters.date}`;
+        const name = state.source === 'totaltv' ? 'Total TV -listoja' : 'Verkkopalveluiden listoja';
+        if (!shown) {
+            timeframe.textContent = '';
+            setMessage(`${name} on kerätty ${finnishDate(info.first)} alkaen${state.source === 'totaltv' ? ', eikä Finnpanel julkaise niistä arkistoa' : ''}.`,
+                {label: `Näytä ${finnishDate(info.first)}`, run: () => showDate(info.first)});
+        } else {
+            if (shown !== date) setMessage(`Päivältä ${finnishDate(date)} ei ole listaa. Näytetään edellinen, ${finnishDate(shown)}.`);
+            const window = rowWindow(rows[0]);
+            timeframe.textContent = `Ajanjakso ${windowText(window.start, window.end)} · lista julkaistu ${finnishDate(shown)}${shown === info.last ? ' (uusin)' : ''}`;
+        }
+        state.demosAvailable = [...new Set(state.rows.map(row => row.Demo))];
+        if (!state.demosAvailable.includes(state.filters.demo)) state.filters.demo = '3+';
         state.comparison = buildComparison(state.rows);
+        updateDateControls(manifest);
+        refreshControls();
         render();
     } catch (error) {
         console.error(error);
-        setMessage(`Could not load the data: ${error.message}`);
+        setMessage(`Tietoja ei voitu ladata: ${error.message}`);
     } finally {
         if (token === loadToken) {
             loading.style.display = 'none';
@@ -161,37 +260,27 @@ async function fetchData() {
     }
 }
 
-function showDate(date) {
-    document.getElementById('dateSelect').value = date;
-    fetchData();
-}
-
 function render() {
-    const view = state.view[state.source];
-    document.getElementById('dataTable').hidden = view !== 'list';
-    document.getElementById('compareView').hidden = view !== 'compare';
-    document.getElementById('tvView').hidden = view !== 'chart';
-    document.getElementById('demo').hidden = view === 'compare';
-    const onlyAllViewers = state.rows.length > 0 && !state.hasDemoData;
-    document.getElementById('demoNote').style.display = view !== 'compare' && onlyAllViewers ? 'block' : 'none';
-    if (view === 'list') updateTable();
-    else if (view === 'compare') updateCompare();
-    else updateTvChart();
+    document.getElementById('dataTable').hidden = state.view !== 'table';
+    document.getElementById('compareView').hidden = state.view !== 'compare';
+    document.getElementById('topView').hidden = state.view !== 'top';
+    if (state.view === 'table') updateTable();
+    else if (state.view === 'compare') updateCompare();
+    else updateTopList();
 }
 
 function downloadXLSX() {
     if (state.rows.length === 0) {
-        alert('No data to download. Please wait for data to load.');
+        alert('Ei ladattavaa: odota, että lista latautuu.');
         return;
     }
-    const date = currentDate();
+    const day = state.rows[0].Date;
     if (state.source === 'online') {
-        const period = document.getElementById('dataRange').value;
         const columns = ['Date', 'Period', 'Demo', 'Rank', 'Service', 'ServiceRank', 'Program', 'Episode', 'Duration', 'Viewers', 'PeriodStart', 'PeriodEnd', 'Population'];
         const numeric = new Set(['Rank', 'ServiceRank', 'Viewers', 'Population']);
         const rows = state.rows.map(row => Object.fromEntries(columns.map(column =>
             [column, numeric.has(column) && row[column] !== '' ? Number(row[column]) : row[column]])));
-        downloadSheets(`${period}_Finnpanel_data_${state.rows[0].Date}.xlsx`, [{name: 'Finnpanel Data', rows}]);
+        downloadSheets(`Verkkopalvelut_${state.filters.period}_${day}.xlsx`, [{name: 'Verkkopalvelut', rows}]);
         return;
     }
     const rows = state.rows.map(row => ({
@@ -203,50 +292,115 @@ function downloadXLSX() {
         BestAiringViewers: row.bestAiring ? bestAiringViewers(row.bestAiring) : '',
         BestAiring: row.bestAiring ? `${row.bestAiring.Channel} ${row.bestAiring.Date} ${row.bestAiring.Time}` : '',
     }));
-    downloadSheets(`TotalTV_Finnpanel_data_${rows[0].Date}.xlsx`, [{name: 'Total TV', rows}]);
+    downloadSheets(`TotalTV_${day}.xlsx`, [{name: 'Total TV', rows}]);
 }
 
-// ---------------------------------------------------------------- title search
+// ---------------------------------------------------------------- title search: a combobox
 
 let searchIndex = null;
+let searchMatches = [];
+let searchActive = -1;
+const searchInput = document.getElementById('titleSearch');
+const searchList = document.getElementById('searchResults');
 
 async function prepareSearch() {
     if (searchIndex) return searchIndex;
-    const input = document.getElementById('titleSearch');
-    input.placeholder = 'Loading titles…';
+    searchInput.placeholder = 'Ladataan ohjelmia…';
     const history = await loadHistory();
-    // Most-listed titles first, so the suggestions lead with what people look for
-    searchIndex = [...history.titles.values()]
-        .map(title => ({key: title.key, name: title.name, weight: title.totaltv.length * 4 + title.online.length + title.tv.length * 2}))
-        .sort((a, b) => b.weight - a.weight);
-    const options = document.getElementById('titleOptions');
-    options.innerHTML = '';
-    const seen = new Set();
-    searchIndex.forEach(item => {
-        if (seen.has(item.name)) return;
-        seen.add(item.name);
-        options.appendChild(new Option(item.name));
-    });
-    input.placeholder = 'Find a title…';
+    searchIndex = [...history.titles.values()].map(title => ({
+        key: title.key, name: title.name, folded: title.name.toLocaleLowerCase('fi'),
+        where: title.where.slice(0, 3).join(', '), lastDate: title.lastDate,
+        weight: title.totaltv.length * 4 + title.online.length + title.tv.length * 2,
+    }));
+    searchInput.placeholder = 'Esim. Salatut elämät';
     return searchIndex;
 }
 
-function findTitle(text) {
-    if (!searchIndex) return null;
+// Names starting with the query first, then a word starting with it, then containing it;
+// among equals, the most recently listed first
+function findTitles(text) {
     const query = text.toLocaleLowerCase('fi').trim();
-    if (!query) return null;
-    return searchIndex.find(item => item.name.toLocaleLowerCase('fi') === query)
-        || searchIndex.find(item => item.key.startsWith(query))
-        || searchIndex.find(item => item.key.includes(query));
+    if (!query || !searchIndex) return [];
+    const score = item => (item.folded.startsWith(query) || item.key.startsWith(query) ? 2
+        : item.folded.split(/[\s:–-]+/).some(word => word.startsWith(query)) ? 1
+            : item.folded.includes(query) ? 0 : -1);
+    return searchIndex
+        .map(item => ({item, score: score(item)}))
+        .filter(match => match.score >= 0)
+        .sort((a, b) => b.score - a.score || b.item.lastDate.localeCompare(a.item.lastDate) || b.item.weight - a.item.weight)
+        .slice(0, 8)
+        .map(match => match.item);
 }
 
-function goToSearch(text) {
-    const found = findTitle(text);
-    if (found) {
-        document.getElementById('titleSearch').value = '';
-        location.hash = `#/title/${encodeURIComponent(found.key)}`;
+function renderSearch() {
+    searchList.innerHTML = '';
+    if (!searchInput.value.trim()) {
+        closeSearch();
+        return;
     }
+    if (!searchMatches.length) {
+        searchList.appendChild(el('li', 'search-empty', searchIndex ? 'Ei osumia' : 'Ladataan…'));
+    }
+    searchMatches.forEach((item, index) => {
+        const option = el('li', 'search-option');
+        option.id = `search-${index}`;
+        option.setAttribute('role', 'option');
+        option.setAttribute('aria-selected', String(index === searchActive));
+        option.append(el('strong', null, item.name),
+            el('span', null, `${item.where} · viimeksi listalla ${finnishDate(item.lastDate)}`));
+        option.addEventListener('pointerdown', event => {
+            event.preventDefault();
+            openSearchResult(item);
+        });
+        searchList.appendChild(option);
+    });
+    searchList.hidden = false;
+    searchInput.setAttribute('aria-expanded', 'true');
+    searchInput.setAttribute('aria-activedescendant', searchActive >= 0 ? `search-${searchActive}` : '');
 }
+
+function closeSearch() {
+    searchList.hidden = true;
+    searchInput.setAttribute('aria-expanded', 'false');
+    searchActive = -1;
+}
+
+function openSearchResult(item) {
+    searchInput.value = '';
+    closeSearch();
+    searchInput.blur();
+    location.hash = `#/title/${encodeURIComponent(item.key)}`;
+}
+
+searchInput.addEventListener('focus', () => prepareSearch().then(() => {
+    if (searchInput.value) {
+        searchMatches = findTitles(searchInput.value);
+        renderSearch();
+    }
+}).catch(error => {
+    searchInput.placeholder = 'Ohjelmia ei voitu ladata';
+    console.error(error);
+}));
+searchInput.addEventListener('input', () => {
+    searchMatches = findTitles(searchInput.value);
+    searchActive = searchMatches.length ? 0 : -1;
+    renderSearch();
+});
+searchInput.addEventListener('keydown', event => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (!searchMatches.length) return;
+        const step = event.key === 'ArrowDown' ? 1 : -1;
+        searchActive = (searchActive + step + searchMatches.length) % searchMatches.length;
+        renderSearch();
+    } else if (event.key === 'Enter') {
+        const item = searchMatches[Math.max(searchActive, 0)];
+        if (item) openSearchResult(item);
+    } else if (event.key === 'Escape') {
+        closeSearch();
+    }
+});
+searchInput.addEventListener('blur', closeSearch);
 
 // ---------------------------------------------------------------- tooltip for data-tip marks
 
@@ -268,6 +422,9 @@ document.addEventListener('scroll', () => { tooltip.hidden = true; }, {passive: 
 
 // ---------------------------------------------------------------- events
 
+document.querySelectorAll('#viewSwitch button').forEach(button => {
+    button.addEventListener('click', () => setView(button.dataset.view));
+});
 document.querySelectorAll('#compareSort button').forEach(button => {
     button.addEventListener('click', () => {
         state.compareSort = button.dataset.sort;
@@ -281,7 +438,7 @@ document.querySelectorAll('#tvSort button').forEach(button => {
         tvSort = button.dataset.sort;
         document.querySelectorAll('#tvSort button').forEach(other =>
             other.setAttribute('aria-pressed', String(other === button)));
-        updateTvChart();
+        updateTopList();
     });
 });
 document.getElementById('includeOutside').addEventListener('change', updateCompare);
@@ -291,22 +448,20 @@ document.getElementById('showAll').addEventListener('click', () => {
 });
 document.getElementById('tvShowAll').addEventListener('click', () => {
     tvShowAll = !tvShowAll;
-    updateTvChart();
+    updateTopList();
 });
-document.getElementById('service').addEventListener('change', render);
-document.getElementById('demo').addEventListener('change', render);
-document.getElementById('dateSelect').addEventListener('change', fetchData);
-document.getElementById('dataRange').addEventListener('change', fetchData);
+document.getElementById('dateSelect').addEventListener('change', async event => {
+    const manifest = await loadManifest();
+    const value = event.target.value;
+    if (value) showDate(value >= manifest[state.source].last ? '' : value);
+});
+document.getElementById('prevDay').addEventListener('click', () => stepDay(-1));
+document.getElementById('nextDay').addEventListener('click', () => stepDay(1));
+document.getElementById('latestDay').addEventListener('click', () => showDate(''));
 document.getElementById('downloadBtn').addEventListener('click', downloadXLSX);
-
-const searchInput = document.getElementById('titleSearch');
-searchInput.addEventListener('focus', () => prepareSearch().catch(error => {
-    searchInput.placeholder = 'Titles could not be loaded';
-    console.error(error);
-}));
-searchInput.addEventListener('change', () => goToSearch(searchInput.value));
-searchInput.addEventListener('keydown', event => {
-    if (event.key === 'Enter') goToSearch(searchInput.value);
+document.getElementById('filtersToggle').addEventListener('click', event => {
+    const open = document.getElementById('filters').classList.toggle('open');
+    event.currentTarget.setAttribute('aria-expanded', String(open));
 });
 
 let resizeTimer = null;
@@ -317,18 +472,4 @@ window.addEventListener('resize', () => {
     }, 150);
 });
 window.addEventListener('hashchange', route);
-
-// Start on the newest list. Falls back to yesterday if the manifest is unreachable.
-(async () => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    let start = isoDate(yesterday);
-    try {
-        const manifest = await loadManifest();
-        if (manifest.online && manifest.online.last) start = manifest.online.last;
-    } catch (error) {
-        console.warn('No manifest, starting from yesterday', error);
-    }
-    document.getElementById('dateSelect').value = start;
-    route();
-})();
+route();

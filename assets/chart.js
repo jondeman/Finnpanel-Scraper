@@ -17,7 +17,7 @@ function niceStep(max, count) {
     return [1, 2, 2.5, 5, 10].map(multiple => multiple * power).find(step => step >= raw);
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS = ['tammi', 'helmi', 'maalis', 'huhti', 'touko', 'kesä', 'heinä', 'elo', 'syys', 'loka', 'marras', 'joulu'];
 
 function timeTicks(from, to, width) {
     const days = (to - from) / DAY_MS;
@@ -71,7 +71,7 @@ function renderTimeChart(container, series, options = {}) {
         entry.append(swatch, document.createTextNode(item.label));
         if (!item.points.length) {
             entry.classList.add('empty');
-            entry.title = 'No figures in this range';
+            entry.title = 'Ei lukuja tällä aikavälillä';
         }
         legend.appendChild(entry);
     });
@@ -79,13 +79,13 @@ function renderTimeChart(container, series, options = {}) {
 
     const all = visible.flatMap(item => item.points);
     if (!all.length) {
-        container.appendChild(el('p', 'tchart-empty', options.emptyText || 'No figures in this range.'));
+        container.appendChild(el('p', 'tchart-empty', options.emptyText || 'Ei lukuja tällä aikavälillä.'));
         return;
     }
 
     const width = Math.max(300, container.clientWidth || 600);
     const height = options.height || 280;
-    const margin = {top: 14, right: width < 480 ? 44 : 60, bottom: 26, left: 46};
+    const margin = {top: 14, right: width < 480 ? 58 : 72, bottom: 26, left: 62};
     const plotWidth = width - margin.left - margin.right;
     const plotHeight = height - margin.top - margin.bottom;
     const from = options.from;
@@ -184,7 +184,7 @@ function renderTimeChart(container, series, options = {}) {
         focusDots.innerHTML = '';
         tooltip.innerHTML = '';
         const date = new Date(t);
-        tooltip.appendChild(el('div', 'tip-date', `${WEEKDAYS_EN[date.getDay()]} ${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`));
+        tooltip.appendChild(el('div', 'tip-date', `${WEEKDAYS_FI[date.getDay()]} ${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`));
         visible.forEach(item => {
             const here = item.points.filter(point => point.t === t);
             const row = el('div', 'tip-row');
@@ -192,7 +192,7 @@ function renderTimeChart(container, series, options = {}) {
             key.style.background = item.color;
             if (!here.length) {
                 if (item.kind === 'dots') return; // airings are on single days; no row on other days
-                row.append(key, el('span', 'tip-missing', `${item.label}: not in the list`));
+                row.append(key, el('span', 'tip-missing', `${item.label}: ei listalla`));
                 tooltip.appendChild(row);
                 return;
             }
@@ -244,4 +244,4 @@ function renderTimeChart(container, series, options = {}) {
     container.addEventListener('blur', hide);
 }
 
-const WEEKDAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEKDAYS_FI = ['su', 'ma', 'ti', 'ke', 'to', 'pe', 'la'];

@@ -1,118 +1,146 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finnpanel Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="assets/dashboard.css?v=2026-11-24b">
+    <link rel="stylesheet" href="assets/dashboard.css?v=2026-11-24c">
 </head>
 <body>
-    <div class="topbar">
+    <header class="topbar">
         <div>
-            <h1><a href="#/online">Finnpanel Dashboard</a></h1>
-            <div class="subtitle" id="subtitle">Yle Areenan, MTV Katsomon ja Ruudun katsotuimmat ohjelmat 2.9.24 alkaen</div>
+            <h1><a href="#/totaltv">Finnpanel Dashboard</a></h1>
+            <div class="subtitle" id="subtitle">Ylen, MTV:n ja Sanoman katsotuimmat ohjelmat</div>
         </div>
-        <div class="title-search">
-            <label for="titleSearch" class="toolbar-label">Title history</label><br>
-            <input id="titleSearch" type="search" list="titleOptions" placeholder="Find a title…" autocomplete="off">
-            <datalist id="titleOptions"></datalist>
+        <div class="search" role="search">
+            <label for="titleSearch" class="filter-label">Hae ohjelman historia</label>
+            <input id="titleSearch" type="search" placeholder="Esim. Salatut elämät" autocomplete="off"
+                   role="combobox" aria-expanded="false" aria-controls="searchResults" aria-autocomplete="list">
+            <ul id="searchResults" role="listbox" aria-label="Ohjelmat" hidden></ul>
         </div>
-    </div>
+    </header>
 
-    <nav class="tabs" aria-label="Data">
-        <a href="#/online" data-source="online" aria-current="true">Online services</a>
-        <a href="#/totaltv" data-source="totaltv" aria-current="false">Total TV</a>
+    <nav class="tabs" aria-label="Tietolähde">
+        <a href="#/totaltv" data-source="totaltv" aria-current="true">Total TV <span class="tab-sub">tv + verkko</span></a>
+        <a href="#/online" data-source="online" aria-current="false">Verkkopalvelut <span class="tab-sub">Areena, Katsomo, Ruutu</span></a>
     </nav>
 
     <main>
         <section id="listsPage">
-            <div id="timeframe"></div>
-
-            <div class="controls">
-                <div class="segmented" id="viewSwitch" role="group" aria-label="View"></div>
-                <input type="date" id="dateSelect" aria-label="List date">
-                <select id="dataRange" aria-label="Period">
-                    <option value="14D">14 Days</option>
-                    <option value="90D">90 Days</option>
-                </select>
-                <select id="service" aria-label="Broadcaster"></select>
-                <select id="demo" title="Target group (kohderyhmä)" aria-label="Demo"></select>
-                <button type="button" id="downloadBtn">Download Data</button>
-                <div id="demoNote">Only the 3+ demo was collected for this date.</div>
+            <div class="view-bar">
+                <div class="segmented view-switch" id="viewSwitch" role="group" aria-label="Näkymä">
+                    <button type="button" data-view="top" aria-pressed="true">Kärkilista</button>
+                    <button type="button" data-view="compare" aria-pressed="false">Kohderyhmät</button>
+                    <button type="button" data-view="table" aria-pressed="false">Taulukko</button>
+                </div>
+                <p class="view-help" id="viewHelp"></p>
             </div>
 
-            <div id="loading">Loading data...</div>
+            <button type="button" class="filters-toggle" id="filtersToggle" aria-expanded="false" aria-controls="filters">
+                <span class="filter-label">Rajaukset</span> <span id="filtersSummary"></span>
+            </button>
+            <div class="filters" id="filters">
+                <div class="filter">
+                    <span class="filter-label" id="dateLabel">Lista</span>
+                    <div class="date-stepper" role="group" aria-labelledby="dateLabel">
+                        <button type="button" class="step" id="prevDay" aria-label="Edellinen päivä">‹</button>
+                        <input type="date" id="dateSelect" aria-label="Listan päivä">
+                        <button type="button" class="step" id="nextDay" aria-label="Seuraava päivä">›</button>
+                        <button type="button" class="latest" id="latestDay">Uusin</button>
+                    </div>
+                </div>
+                <div class="filter" id="periodFilter">
+                    <span class="filter-label">Ajanjakso</span>
+                    <div class="segmented" id="periodSwitch" role="group" aria-label="Ajanjakso">
+                        <button type="button" data-value="14D" aria-pressed="true">14 päivää</button>
+                        <button type="button" data-value="90D" aria-pressed="false">90 päivää</button>
+                    </div>
+                </div>
+                <div class="filter">
+                    <span class="filter-label" id="serviceLabel">Mediatalo</span>
+                    <div class="segmented" id="serviceSwitch" role="group" aria-labelledby="serviceLabel"></div>
+                </div>
+                <div class="filter">
+                    <span class="filter-label">Kohderyhmä</span>
+                    <div class="segmented" id="demoSwitch" role="group" aria-label="Kohderyhmä"></div>
+                </div>
+            </div>
+
+            <div class="list-meta">
+                <p id="timeframe"></p>
+                <button type="button" class="secondary-btn" id="downloadBtn">Lataa lista Exceliin</button>
+            </div>
+            <div id="loading">Ladataan…</div>
             <div id="listMessage" role="status" hidden></div>
 
             <div id="listsBody">
-                <div class="table-scroll" id="dataTable">
-                    <table>
-                        <thead id="tableHead"></thead>
-                        <tbody id="tableBody"></tbody>
-                    </table>
-                </div>
-
-                <section id="tvView" class="tv-panel" hidden>
-                    <p class="tv-summary" id="tvSummary"></p>
-                    <div class="compare-toolbar">
-                        <span class="toolbar-label">Sort by</span>
-                        <div class="segmented" id="tvSort" role="group" aria-label="Sort programmes">
-                            <button type="button" data-sort="total" aria-pressed="true">TV + online</button>
-                            <button type="button" data-sort="online" aria-pressed="false">Online</button>
-                            <button type="button" data-sort="share" aria-pressed="false">Online share</button>
+                <section id="topView" class="tv-panel">
+                    <p class="tv-summary" id="tvSummary" hidden></p>
+                    <div class="compare-toolbar" id="topToolbar">
+                        <span class="toolbar-label">Järjestys</span>
+                        <div class="segmented" id="tvSort" role="group" aria-label="Järjestys">
+                            <button type="button" data-sort="total" aria-pressed="true">Katsojat</button>
+                            <button type="button" data-sort="online" aria-pressed="false">Verkossa katsoneet</button>
+                            <button type="button" data-sort="share" aria-pressed="false">Verkon osuus</button>
                         </div>
-                    </div>
-                    <div class="tv-legend" aria-hidden="true">
-                        <span><i class="key seg-online"></i> Online only: Yle Areena, MTV Katsomo or Ruutu, same 14 days</span>
-                        <span><i class="key seg-tv"></i> The rest of the audience: TV, live and recorded</span>
+                        <div class="tv-legend" id="topLegend" aria-hidden="true">
+                            <span><i class="key seg-online"></i> Verkossa (Areena, Katsomo, Ruutu)</span>
+                            <span><i class="key seg-tv"></i> Muu katselu: tv, suorana ja tallenteelta</span>
+                        </div>
                     </div>
                     <ol id="tvBars"></ol>
                     <button type="button" class="show-all" id="tvShowAll" hidden></button>
-                    <p class="compare-footnote">
-                        Total TV counts each programme's most-watched episode over the 14 days, on TV and online together.
-                        The online part is the same programme in the online-only list for the same 14 days. That list names its
-                        own most-watched episode, so the share is approximate, and ≈ marks a known different episode. A programme
-                        missing from the online top 20 has at most the 20th place's audience online. Hover a bar for the
-                        programme's biggest linear airing in the window. Select a title for its full history.
-                    </p>
+                    <details class="explain" id="topExplain">
+                        <summary>Miten luen tätä?</summary>
+                        <div id="topExplainText"></div>
+                    </details>
                 </section>
 
                 <section id="compareView" hidden>
                     <div id="compareMessage" hidden></div>
                     <div id="compareContent">
                         <div class="compare-toolbar">
-                            <span class="toolbar-label">Sort by</span>
-                            <div class="segmented" id="compareSort" role="group" aria-label="Sort shows">
-                                <button type="button" data-sort="total" aria-pressed="true">Total</button>
-                                <button type="button" data-sort="under45" aria-pressed="false">Under 45</button>
+                            <span class="toolbar-label">Järjestys</span>
+                            <div class="segmented" id="compareSort" role="group" aria-label="Järjestys">
+                                <button type="button" data-sort="total" aria-pressed="true">Kaikki katsojat</button>
+                                <button type="button" data-sort="under45" aria-pressed="false">Alle 45</button>
                                 <button type="button" data-sort="over45" aria-pressed="false">45+</button>
-                                <button type="button" data-sort="young" aria-pressed="false">Youngest</button>
-                                <button type="button" data-sort="old" aria-pressed="false">Oldest</button>
+                                <button type="button" data-sort="young" aria-pressed="false">Nuorin yleisö</button>
+                                <button type="button" data-sort="old" aria-pressed="false">Vanhin yleisö</button>
                             </div>
-                            <label class="check"><input type="checkbox" id="includeOutside"> Include shows that only made a demo list</label>
+                            <label class="check"><input type="checkbox" id="includeOutside"> Myös ohjelmat, jotka ovat vain jonkin kohderyhmän listalla</label>
                         </div>
                         <div class="pyramid">
                             <div class="pyramid-head" aria-hidden="true">
                                 <span class="pos-head">#</span>
-                                <span class="who-head">Show</span>
+                                <span class="who-head">Ohjelma</span>
                                 <span class="fly">
-                                    <span class="side left">Under 45 viewers <i class="key seg-under45"></i></span>
+                                    <span class="side left">Alle 45-vuotiaat <i class="key seg-under45"></i></span>
                                     <span class="axis"></span>
-                                    <span class="side right"><i class="key seg-over45"></i> 45+ viewers</span>
+                                    <span class="side right"><i class="key seg-over45"></i> 45 vuotta täyttäneet</span>
                                 </span>
                             </div>
                             <ol id="pyramid"></ol>
                             <button type="button" class="show-all" id="showAll" hidden></button>
                         </div>
-                        <p class="compare-footnote">
-                            The big number is the show's rank among all viewers (3+). Each bar shows how many viewers the show
-                            has in that age group, with its rank in that group's list (dark = top 10). Under 45 and 45+ together
-                            make up the 3+ audience, so a figure missing from one list is worked out from the other two and
-                            marked ≈. Select a row for details, or a name for the title's full history.
-                        </p>
+                        <details class="explain">
+                            <summary>Miten luen tätä?</summary>
+                            <p>Iso numero on ohjelman sija kaikkien katsojien (3+) listalla. Palkit näyttävät, montako katsojaa
+                            ohjelmalla on kummassakin ikäryhmässä, ja sijan sen ryhmän listalla (tumma = kärkikymmenikkö).
+                            Alle 45-vuotiaat ja 45 vuotta täyttäneet muodostavat yhdessä kaikki katsojat, joten yhdeltä listalta
+                            puuttuva luku lasketaan kahdesta muusta ja merkitään ≈. Haalea palkki on laskettu, ≤-luku on yläraja.
+                            Klikkaa riviä nähdäksesi kohderyhmät tarkemmin, tai ohjelman nimeä sen koko historiaan.</p>
+                        </details>
                     </div>
                 </section>
+
+                <div class="table-scroll" id="dataTable" hidden>
+                    <table>
+                        <thead id="tableHead"></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -121,15 +149,15 @@
     <div id="tooltip" role="tooltip" hidden></div>
 
     <footer>
-        Vibe coded by
+        Lähde: Finnpanel Oy · Vibe coded by
         <a class="footer-link" href="https://www.linkedin.com/in/joonakortesmaki/" target="_blank" rel="noopener">Joona Kortesmäki</a>
     </footer>
 
-    <script src="assets/data.js?v=2026-11-24b"></script>
-    <script src="assets/chart.js?v=2026-11-24b"></script>
-    <script src="assets/lists.js?v=2026-11-24b"></script>
-    <script src="assets/totaltv.js?v=2026-11-24b"></script>
-    <script src="assets/title.js?v=2026-11-24b"></script>
-    <script src="assets/app.js?v=2026-11-24b"></script>
+    <script src="assets/data.js?v=2026-11-24c"></script>
+    <script src="assets/chart.js?v=2026-11-24c"></script>
+    <script src="assets/lists.js?v=2026-11-24c"></script>
+    <script src="assets/toplist.js?v=2026-11-24c"></script>
+    <script src="assets/title.js?v=2026-11-24c"></script>
+    <script src="assets/app.js?v=2026-11-24c"></script>
 </body>
 </html>

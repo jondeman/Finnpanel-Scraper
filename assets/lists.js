@@ -1,14 +1,16 @@
-// The top-list views shared by the Online and Total TV tabs: the table and the demo comparison.
-// Both read state.rows, one day's list in a common shape:
-// {Date, Demo, Rank, Service, Program, Episode, Duration, Viewers}. TotalTV rows also carry
-// GroupRank, PeriodStart, PeriodEnd and, once enriched (totaltv.js), their online and linear figures.
+// The list views shared by the Total TV and Verkkopalvelut tabs: the table and the demo comparison
+// (the top list is in toplist.js). All read state.rows, one day's list in a common shape:
+// {Date, Period, Demo, Rank, Service, Program, Episode, Duration, Viewers}. Total TV rows also carry
+// GroupRank, PeriodStart, PeriodEnd and, once enriched (toplist.js), their online and linear figures.
 
 const state = {
-    source: 'online',
-    view: {online: 'list', totaltv: 'chart'},
+    source: 'totaltv',
+    view: 'top',
+    filters: {date: '', period: '14D', service: 'all', demo: '3+'},
     rows: [],
+    shownDate: null,
     comparison: [],
-    hasDemoData: false,
+    demosAvailable: ['3+'],
     openShowKey: null,
     compareSort: 'total',
     showAllRows: false,
@@ -16,17 +18,12 @@ const state = {
 
 const topRows = 20;
 
-function selectedService() {
-    return document.getElementById('service').value;
-}
-
 function selectedDemo() {
-    return document.getElementById('demo').value || '3+';
+    return state.filters.demo;
 }
 
 function inService(serviceName) {
-    const service = selectedService();
-    return service === 'all' || groupKeyOf(serviceName) === service;
+    return state.filters.service === 'all' || groupKeyOf(serviceName) === state.filters.service;
 }
 
 function demoSortKey(demo) {
@@ -34,73 +31,59 @@ function demoSortKey(demo) {
     return index === -1 ? DEMO_ORDER.length : index;
 }
 
-// Offer only the demos present in the loaded list, keeping the current choice when possible
-function updateDemoOptions() {
-    const select = document.getElementById('demo');
-    const previous = select.value || '3+';
-    const available = [...new Set(state.rows.map(row => row.Demo))]
-        .sort((a, b) => demoSortKey(a) - demoSortKey(b));
-    select.innerHTML = '';
-    available.forEach(demo => select.add(new Option(`Demo: ${demo}`, demo)));
-    select.value = previous;
-    if (!select.value && available.length > 0) {
-        select.value = available.includes('3+') ? '3+' : available[0];
-    }
-    state.hasDemoData = available.some(demo => demo !== '3+');
+function openTitle(program) {
+    location.hash = titleHref(program);
 }
 
 // ---------------------------------------------------------------- table
-
-function programCell(row) {
-    const td = el('td');
-    td.appendChild(link(titleHref(row.Program), String(row.Program || ''), 'title-link'));
-    return td;
-}
 
 function updateTable() {
     const demo = selectedDemo();
     const rows = state.rows.filter(row => row.Demo === demo && inService(row.Service));
     const totaltv = state.source === 'totaltv';
-    const showEpisode = totaltv || rows.some(row => row.Episode);
     const columns = totaltv
-        ? ['Rank', 'Broadcaster', 'Program', 'Episode', 'Duration', 'Viewers', 'Online, same 14 days', 'Online share', 'Best linear airing']
-        : ['Date', 'Demo', 'Rank', 'Service', 'Program', ...(showEpisode ? ['Episode'] : []), 'Duration', 'Viewers'];
+        ? [['Sija', 'num'], ['Mediatalo', ''], ['Ohjelma', ''], ['Jakso', ''], ['Kesto', ''], ['Katsojia', 'num'],
+            ['Verkossa samana aikana', 'num'], ['Verkon osuus', 'num'], ['Paras tv-lähetys', '']]
+        : [['Sija', 'num'], ['Palvelu', ''], ['Ohjelma', ''], ['Jakso', ''], ['Kesto', ''], ['Katsojia', 'num']];
 
     const head = document.getElementById('tableHead');
     head.innerHTML = '';
     const headRow = el('tr');
-    columns.forEach(column => headRow.appendChild(el('th', /Viewers|Online|Rank/.test(column) ? 'num' : null, column)));
+    columns.forEach(([column, className]) => headRow.appendChild(el('th', className || null, column)));
     head.appendChild(headRow);
 
     const body = document.getElementById('tableBody');
     body.innerHTML = '';
     rows.forEach(row => {
-        const tr = el('tr');
-        const viewers = row.Viewers ? fullNumber(parseInt(row.Viewers, 10)) : '';
+        const tr = el('tr', 'link-row');
+        tr.tabIndex = 0;
+        tr.title = `Avaa ${seriesName(row.Program)}: koko historia`;
+        tr.addEventListener('click', event => {
+            if (!event.target.closest('a')) openTitle(row.Program);
+        });
+        tr.addEventListener('keydown', event => {
+            if (event.key === 'Enter') openTitle(row.Program);
+        });
+        const name = el('td');
+        name.appendChild(link(titleHref(row.Program), String(row.Program || ''), 'title-link'));
+        const rank = el('td', 'num', `${row.Rank}.`);
+        rank.title = 'Sija kaikkien kolmen listalla';
+        const service = totaltv ? `${row.Service} (${row.GroupRank}.)` : `${row.Service} (${row.ServiceRank}.)`;
+        tr.append(rank, el('td', null, service), name, el('td', 'episode-cell', row.Episode || ''),
+            el('td', null, row.Duration || ''), el('td', 'num', fullNumber(row.Viewers)));
         if (totaltv) {
             const online = row.online;
             tr.append(
-                el('td', 'num', String(row.Rank)),
-                el('td', null, `${row.Service} #${row.GroupRank}`),
-                programCell(row),
-                el('td', 'episode-cell', row.Episode || ''),
-                el('td', null, row.Duration || ''),
-                el('td', 'num', viewers),
-                el('td', 'num', online ? `${fullNumber(online.viewers)} (#${online.rank})` : (row.onlineCeiling ? `≤ ${fullNumber(row.onlineCeiling)}` : '–')),
+                el('td', 'num', online ? fullNumber(online.viewers) : (row.onlineCeiling ? `enint. ${fullNumber(row.onlineCeiling)}` : '–')),
                 el('td', 'num', row.onlineShare !== null && row.onlineShare !== undefined ? `${row.onlineShareApprox ? '≈' : ''}${percent(row.onlineShare)}` : '–'),
                 el('td', null, row.bestAiring ? airingText(row.bestAiring) : '–'),
             );
-        } else {
-            tr.append(el('td', null, row.Date || ''), el('td', null, row.Demo || ''), el('td', 'num', String(row.Rank || '')),
-                el('td', null, row.Service || ''), programCell(row));
-            if (showEpisode) tr.appendChild(el('td', 'episode-cell', row.Episode || ''));
-            tr.append(el('td', null, row.Duration || ''), el('td', 'num', viewers));
         }
         body.appendChild(tr);
     });
     if (!rows.length) {
         const tr = el('tr');
-        const td = el('td', 'empty-cell', 'No programmes in this list.');
+        const td = el('td', 'empty-cell', 'Tällä valinnalla ei ole ohjelmia.');
         td.colSpan = columns.length;
         tr.appendChild(td);
         body.appendChild(tr);
@@ -109,7 +92,7 @@ function updateTable() {
 
 function airingText(airing) {
     const viewers = airing.Viewers7d || airing.ViewersSameDay;
-    return `${fullNumber(viewers)} · ${airing.Channel} ${WEEKDAY_NAMES[airing.Weekday] || airing.Weekday} ${finnishDate(airing.Date, false)} ${airing.Time}`;
+    return `${fullNumber(viewers)} · ${airing.Channel} ${WEEKDAY_NAMES[airing.Weekday] || airing.Weekday} ${finnishDate(airing.Date, false)} klo ${airing.Time}`;
 }
 
 // ---------------------------------------------------------------- demo comparison
@@ -133,7 +116,8 @@ function buildComparison(rows) {
         const show = shows.get(key);
         const current = show.demos[row.Demo];
         if (!current || rank < current.rank) {
-            show.demos[row.Demo] = {viewers, rank, program: String(row.Program), groupRank: row.GroupRank ? Number(row.GroupRank) : null};
+            const ownRank = row.GroupRank || row.ServiceRank;
+            show.demos[row.Demo] = {viewers, rank, program: String(row.Program), ownRank: ownRank ? Number(ownRank) : null};
         }
     });
 
@@ -148,15 +132,15 @@ function buildComparison(rows) {
         const derived = {};
         if (total !== null && under === null && over !== null) {
             values['Alle 45'] = Math.max(total - over, 0);
-            derived['Alle 45'] = '3+ minus 45+';
+            derived['Alle 45'] = 'kaikki katsojat miinus 45+';
         }
         if (total !== null && over === null && under !== null) {
             values['45+'] = Math.max(total - under, 0);
-            derived['45+'] = '3+ minus Alle 45';
+            derived['45+'] = 'kaikki katsojat miinus alle 45';
         }
         if (total === null && under !== null && over !== null) {
             values['3+'] = under + over;
-            derived['3+'] = 'Alle 45 plus 45+';
+            derived['3+'] = 'alle 45 plus 45+';
         }
         // Each list shows the show's most-watched episode in that demo; when those episodes
         // differ, the two age groups no longer add up to 3+
@@ -180,7 +164,7 @@ function buildComparison(rows) {
 
 function notListedText(show, demo) {
     const ceiling = show.ceilings[demo];
-    return ceiling ? `at most ${fullNumber(ceiling)}` : 'not known';
+    return ceiling ? `enintään ${fullNumber(ceiling)}` : 'ei tiedossa';
 }
 
 function rankShade(rank) {
@@ -215,10 +199,10 @@ function shownShows() {
 function updateCompare() {
     const message = document.getElementById('compareMessage');
     const content = document.getElementById('compareContent');
-    if (!state.hasDemoData) {
+    if (state.demosAvailable.length < 2) {
         message.textContent = state.rows.length
-            ? 'This date only has the 3+ demo. Demo data starts on 2026-10-07, so pick that date or later.'
-            : 'No data loaded for this date.';
+            ? 'Tältä päivältä on vain kaikkien katsojien (3+) lista. Kohderyhmät kerätään 7.10.2026 alkaen.'
+            : 'Tälle päivälle ei ole listaa.';
         message.hidden = false;
         content.hidden = true;
         return;
@@ -241,7 +225,7 @@ function updateCompare() {
 
     const more = document.getElementById('showAll');
     more.hidden = shows.length <= topRows;
-    more.textContent = state.showAllRows ? `Show top ${topRows}` : `Show all ${shows.length} shows`;
+    more.textContent = state.showAllRows ? `Näytä kärki ${topRows}` : `Näytä kaikki ${shows.length} ohjelmaa`;
 }
 
 function splitTrack(split, className) {
@@ -267,14 +251,14 @@ function renderShowRow(show, scale, index) {
 
     const overall = show.demos['3+'];
     const pos = el('span', overall ? 'pos' : 'pos none', overall ? String(overall.rank) : '–');
-    pos.dataset.tip = overall ? `#${overall.rank} among all viewers (3+)` : 'Not in the 3+ list';
+    pos.dataset.tip = overall ? `${overall.rank}. kaikkien katsojien (3+) listalla` : 'Ei kaikkien katsojien listalla';
 
     const meta = [show.service];
     if (show.values['3+'] !== null) {
-        meta.push(`${'3+' in show.derived ? '≈' : ''}${thousands(show.values['3+'])} viewers`);
+        meta.push(`${'3+' in show.derived ? '≈' : ''}${thousands(show.values['3+'])} katsojaa`);
     }
     if (show.split !== null) {
-        meta.push(`${show.splitApprox ? '≈' : ''}${percent(show.split)} under 45`);
+        meta.push(`${show.splitApprox ? '≈' : ''}${percent(show.split)} alle 45-v.`);
     }
     const who = el('span', 'who');
     who.append(link(titleHref(show.program), show.name, 'name title-link'), el('span', 'meta', meta.join(' · ')));
@@ -282,7 +266,7 @@ function renderShowRow(show, scale, index) {
     const fly = el('button', 'fly fly-btn');
     fly.type = 'button';
     fly.setAttribute('aria-expanded', String(show.key === state.openShowKey));
-    fly.setAttribute('aria-label', `Details for ${show.name}`);
+    fly.setAttribute('aria-label', `${show.name}: kohderyhmät tarkemmin`);
     fly.addEventListener('click', () => toggleDetail(show.key));
     fly.append(renderHalf(show, 'Alle 45', 'left', scale, index), el('span', 'axis'),
         renderHalf(show, '45+', 'right', scale, index));
@@ -293,7 +277,7 @@ function renderShowRow(show, scale, index) {
 
 function renderHalf(show, demo, side, scale, index) {
     const half = el('span', `half ${side}`);
-    const group = demo === 'Alle 45' ? 'Under 45' : '45+';
+    const group = demo === 'Alle 45' ? 'Alle 45-vuotiaat' : '45 vuotta täyttäneet';
     const value = show.values[demo];
     const entry = show.demos[demo];
     const val = el('span', 'val');
@@ -301,7 +285,7 @@ function renderHalf(show, demo, side, scale, index) {
         const ceiling = show.ceilings[demo];
         val.classList.add('missing');
         val.textContent = ceiling ? `≤${thousands(ceiling)}` : '–';
-        half.dataset.tip = `${group}: not in the ${demo} list (${notListedText(show, demo)} viewers)`;
+        half.dataset.tip = `${group}: ei listalla (${notListedText(show, demo)} katsojaa)`;
         half.appendChild(val);
         return half;
     }
@@ -310,12 +294,12 @@ function renderHalf(show, demo, side, scale, index) {
     bar.style.setProperty('--delay', `${Math.min(index, topRows) * 25}ms`);
     const amount = el('span', null, `${entry ? '' : '≈'}${thousands(value)}`);
     if (entry) {
-        const chip = el('b', `rk ${rankShade(entry.rank)}`, `#${entry.rank}`);
+        const chip = el('b', `rk ${rankShade(entry.rank)}`, `${entry.rank}.`);
         side === 'left' ? val.append(amount, chip) : val.append(chip, amount);
-        half.dataset.tip = `${group}: ${fullNumber(entry.viewers)} viewers · #${entry.rank} in ${demo}`;
+        half.dataset.tip = `${group}: ${fullNumber(entry.viewers)} katsojaa · ${entry.rank}. ryhmän listalla`;
     } else {
         val.appendChild(amount);
-        half.dataset.tip = `${group}: ≈${fullNumber(value)} viewers, worked out as ${show.derived[demo]}`;
+        half.dataset.tip = `${group}: ≈${fullNumber(value)} katsojaa, laskettu: ${show.derived[demo]}`;
     }
     side === 'left' ? half.append(val, bar) : half.append(bar, val);
     return half;
@@ -357,16 +341,16 @@ function renderDetail(show, {titleLink = false, heading = null} = {}) {
         h3.textContent = heading || show.name;
     }
     title.append(h3,
-        el('div', 'detail-meta', sharedEpisode ? `${show.service} · Most-watched episode: ${sharedEpisode}` : show.service));
+        el('div', 'detail-meta', sharedEpisode ? `${show.service} · katsotuin jakso: ${sharedEpisode}` : show.service));
     if (titleLink) {
-        title.appendChild(link(titleHref(show.program), 'Open title history →', 'detail-open'));
+        title.appendChild(link(titleHref(show.program), 'Avaa ohjelman koko historia →', 'detail-open'));
     }
     const hero = el('div', 'hero');
     if (show.values['3+'] !== null) {
         hero.append(el('span', 'hero-num', `${'3+' in show.derived ? '≈' : ''}${fullNumber(show.values['3+'])}`),
-            el('span', 'hero-label', 'viewers aged 3+'));
+            el('span', 'hero-label', 'katsojaa, kaikki 3+'));
     } else {
-        hero.append(el('span', 'hero-label', `Not in the 3+ list (${notListedText(show, '3+')} viewers)`));
+        hero.append(el('span', 'hero-label', `Ei kaikkien katsojien listalla (${notListedText(show, '3+')} katsojaa)`));
     }
     top.append(title, hero);
     card.appendChild(top);
@@ -375,13 +359,13 @@ function renderDetail(show, {titleLink = false, heading = null} = {}) {
         const approx = show.splitApprox ? '≈' : '';
         const split = el('div', 'split-big');
         const left = el('span', 'pct', approx + percent(show.split));
-        left.appendChild(el('small', null, 'under 45'));
+        left.appendChild(el('small', null, 'alle 45-vuotiaita'));
         const right = el('span', 'pct right', approx + percent(1 - show.split));
-        right.appendChild(el('small', null, '45 or older'));
+        right.appendChild(el('small', null, '45 vuotta täyttäneitä'));
         split.append(left, splitTrack(show.split, 'split-track'), right);
         card.appendChild(split);
     } else {
-        card.appendChild(el('p', 'detail-note', 'Not enough data to split this audience by age.'));
+        card.appendChild(el('p', 'detail-note', 'Yleisöä ei voi jakaa ikäryhmiin näillä tiedoilla.'));
     }
 
     const ranks = Object.values(show.demos).map(entry => entry.rank);
@@ -392,22 +376,22 @@ function renderDetail(show, {titleLink = false, heading = null} = {}) {
         const entry = show.demos[demo];
         const value = show.values[demo];
         const tile = el('div', `rank-tile ${tileClass[demo] || ''}`);
-        tile.append(el('span', 'big', entry ? `#${entry.rank}` : '–'), el('span', 'lbl', DEMO_LABELS[demo]));
+        tile.append(el('span', 'big', entry ? `${entry.rank}.` : '–'), el('span', 'lbl', DEMO_LABELS[demo]));
         if (entry) {
-            tile.appendChild(el('span', 'sub', `${fullNumber(entry.viewers)} viewers`));
-            if (entry.groupRank) {
-                tile.appendChild(el('span', 'episode', `#${entry.groupRank} at ${show.service}`));
+            tile.appendChild(el('span', 'sub', `${fullNumber(entry.viewers)} katsojaa`));
+            if (entry.ownRank) {
+                tile.appendChild(el('span', 'episode', `${entry.ownRank}. ${genitive(show.service)} listalla`));
             }
             if (!sharedEpisode && entry.program !== show.name) {
                 tile.appendChild(el('span', 'episode', entry.program));
             }
             if (entry.rank === bestRank && ranks.length > 1) {
-                tile.appendChild(el('span', 'badge', 'Best'));
+                tile.appendChild(el('span', 'badge', 'Paras'));
             }
         } else if (value !== null) {
-            tile.appendChild(el('span', 'sub', `≈${fullNumber(value)} viewers (${show.derived[demo]})`));
+            tile.appendChild(el('span', 'sub', `≈${fullNumber(value)} katsojaa (${show.derived[demo]})`));
         } else {
-            tile.appendChild(el('span', 'sub', `Not in the list: ${notListedText(show, demo)}`));
+            tile.appendChild(el('span', 'sub', `Ei listalla: ${notListedText(show, demo)}`));
         }
         tiles.appendChild(tile);
     });
@@ -415,12 +399,12 @@ function renderDetail(show, {titleLink = false, heading = null} = {}) {
 
     const notes = [];
     if (show.share2564 !== null) {
-        notes.push(`${'3+' in show.derived ? '≈' : ''}${percent(show.share2564)} of the viewers are 25–64.`);
+        notes.push(`${'3+' in show.derived ? '≈' : ''}${percent(show.share2564)} katsojista on 25–64-vuotiaita.`);
     }
     if (show.mismatch) {
-        notes.push('The 3+, Alle 45 and 45+ lists show different episodes of this show, so the split is approximate.');
+        notes.push('Kohderyhmien listoilla on ohjelman eri jaksoja, joten jako on likimääräinen.');
     } else if (Object.keys(show.derived).length > 0) {
-        notes.push('≈ figures are worked out from the other groups: under 45 and 45+ together make up the 3+ audience.');
+        notes.push('≈-luvut on laskettu muista ryhmistä: alle 45-vuotiaat ja 45 vuotta täyttäneet ovat yhdessä kaikki katsojat.');
     }
     if (notes.length) {
         card.appendChild(el('p', 'detail-note', notes.join(' ')));

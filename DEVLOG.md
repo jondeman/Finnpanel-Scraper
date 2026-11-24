@@ -5,6 +5,33 @@ and why each decision went the way it did. Newest first.
 
 ---
 
+## 2026-11-24 — Usability round: Finnish, one structure, visible choices
+
+Dashboard only. A walk-through as a first-time user found seven points of
+friction; each is fixed below.
+
+| Friction | Change |
+|---|---|
+| Finnish subtitle, English everything else | All text in Finnish with Finnpanel's own terms (kohderyhmä, keskikatsojamäärä, tavoittavuus); numbers the Finnish way (1 023 000, 7 %, 1,02 milj.) |
+| The two tabs worked differently (online opened on a table, Total TV on a chart) | Both tabs have the same three views: **Kärkilista**, **Kohderyhmät**, **Taulukko**. Total TV is the start page |
+| One crowded row of dropdowns; the demo dropdown disappeared in some views; "Download Data" was the loudest button | Labelled button groups (Mediatalo/Palvelu, Kohderyhmä, Ajanjakso), so every option is visible. A choice that does not apply stays on screen, disabled, with the reason as a tooltip (Total TV has no 90-day list; Kohderyhmät shows all groups). Download is a quiet button beside the list's period |
+| Dates only through a calendar, with no sense of what exists | ‹ › day stepper and a "Siirry uusimpaan" button; the period line says whether the list is the newest |
+| Programme names did not look clickable | Whole rows open the title page (top list and table), with hover and keyboard focus; each view's one-line help says so |
+| Search only on an exact name | Suggestions while typing: name, where it was seen and when it was last listed; arrow keys and Enter |
+| Long explanations below every list; views could not be shared | Explanations behind "Miten luen tätä?". View and filters live in the address (`#/online?view=compare&demo=45%2B&service=mtv`), so a link opens the same view and Back returns to it. Tab links keep the filters |
+
+Also: title pages got section shortcuts ("Siirry: Kehitys · Ikäryhmät ·
+Kohderyhmät · …"), and on phones the filters fold behind one "Rajaukset" button
+that names the current choices, so the list starts on the first screen (first
+row at 671 px instead of ~1,300 px).
+
+Verified in Chromium with a 27-step walk-through: default view, filters, the
+address after each change, Back from a title page, a shared link, the day
+stepper, row clicks, search by mouse and keyboard, section shortcuts, the chart
+tooltip, and no sideways scroll at 390 px on four pages. Console clean.
+
+---
+
 ## 2026-11-24 — Total TV, linear TV, title pages, and everything in CSV
 
 Branch `totaltv-titles`, pushed to `main`. `FPTV.py` replaces `FPGH.py` and

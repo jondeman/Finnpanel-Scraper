@@ -361,15 +361,36 @@ footer {
     gap: 8px 20px;
 }
 .topbar h1 a { color: inherit; text-decoration: none; }
-.title-search input {
-    width: 260px;
-    max-width: 100%;
-    padding: 8px 12px;
-    border: 1px solid var(--border-grey);
-    border-radius: 6px;
+/* Title search: an input with a suggestion list */
+.search { position: relative; width: 320px; max-width: 100%; }
+.search input {
+    box-sizing: border-box;
+    width: 100%;
+    margin-top: 4px;
+    padding: 9px 12px;
+    border: 1px solid #cfd5df;
+    border-radius: 8px;
+    background: var(--white);
     font-size: 1rem;
 }
-.title-search input:focus { outline: 2px solid var(--main-blue); outline-offset: 1px; }
+.search input:focus { outline: 2px solid var(--main-blue); outline-offset: 1px; }
+#searchResults {
+    position: absolute;
+    z-index: 20;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin: 4px 0 0;
+    padding: 4px;
+    list-style: none;
+    border-radius: 8px;
+    background: var(--white);
+    box-shadow: 0 6px 24px #0f2d5233;
+}
+.search-option { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 6px; cursor: pointer; }
+.search-option span { font-size: 0.8rem; color: var(--muted-text); }
+.search-option:hover, .search-option[aria-selected="true"] { background: var(--accent-blue); }
+.search-empty { padding: 8px 10px; color: var(--muted-text); }
 .tabs { display: flex; gap: 4px; margin: 4px 0 14px; border-bottom: 2px solid var(--border-grey); }
 .tabs a {
     margin-bottom: -2px;
@@ -381,6 +402,7 @@ footer {
 }
 .tabs a:hover { color: var(--main-blue); }
 .tabs a[aria-current="true"] { color: var(--main-blue); border-bottom-color: var(--main-blue); }
+.tab-sub { display: block; font-size: 0.75rem; font-weight: normal; color: var(--muted-text); }
 #listMessage {
     margin: 0 0 12px;
     padding: 10px 14px;
@@ -422,7 +444,7 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
     gap: 2px;
     flex: none;
     height: 14px;
-    width: calc((100% - 8.5em) * var(--w));
+    width: calc((100% - var(--label-space, 8.5em)) * var(--w));
     transform-origin: left center;
     animation: grow 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
     animation-delay: var(--delay, 0s);
@@ -546,4 +568,93 @@ th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; white-sp
     .breakdown { grid-template-columns: 1fr; }
     .card { padding: 12px; }
     .title-controls .toolbar-label:not(:first-child) { margin-left: 0; }
+}
+
+/* ---------------------------------------------------------------- usability round: views, filters, rows */
+.view-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 12px; }
+.view-switch button { padding: 8px 16px; font-size: 1rem; }
+.view-help { margin: 0; color: var(--accent-grey); font-size: 0.95rem; }
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px 22px;
+    margin: 0 0 10px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--white);
+    box-shadow: 0 2px 8px #0001;
+}
+.filter { display: flex; flex-direction: column; gap: 5px; }
+.filter-label { font-size: 0.78rem; font-weight: bold; letter-spacing: 0.02em; color: var(--muted-text); text-transform: uppercase; }
+.filters .segmented, .title-controls .segmented { margin: 0; }
+.segmented button:focus-visible, .date-stepper button:focus-visible, .secondary-btn:focus-visible {
+    outline: 2px solid var(--main-blue);
+    outline-offset: 1px;
+}
+.date-stepper { display: inline-flex; align-items: center; gap: 4px; }
+.date-stepper input[type="date"] { margin: 0; padding: 6px 8px; }
+.date-stepper .step, .date-stepper .latest, .secondary-btn {
+    margin: 0;
+    padding: 6px 11px;
+    border: 1px solid #cfd5df;
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--main-blue);
+    font-size: 0.95rem;
+}
+.date-stepper .step { min-width: 34px; font-size: 1.2rem; line-height: 1; }
+.date-stepper button:hover:not(:disabled), .secondary-btn:hover { background: var(--accent-blue); }
+.date-stepper button:disabled { color: var(--rank-mid); cursor: default; }
+.date-stepper .latest:disabled { border-color: transparent; color: var(--muted-text); }
+.list-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; margin: 4px 2px 12px; }
+#timeframe { margin: 0; font-weight: normal; color: var(--accent-grey); }
+.link-row { cursor: pointer; }
+.tv-row.link-row:hover, .tv-row.link-row:focus-visible { background: #f4f7fc; }
+.tv-row.link-row:focus-visible, tr.link-row:focus-visible { outline: 2px solid var(--main-blue); outline-offset: -2px; }
+.tv-row { border-radius: 6px; }
+tr.link-row:hover td { background: #eef3fc; }
+.explain { margin: 14px 2px 0; font-size: 0.9rem; color: var(--accent-grey); }
+.explain summary { cursor: pointer; color: var(--main-blue); font-weight: bold; }
+.explain p { margin: 8px 0 0; max-width: 820px; line-height: 1.45; }
+.jump-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 16px; }
+.jump-links .filter-label { margin-right: 4px; }
+.jump {
+    margin: 0;
+    padding: 5px 11px;
+    border: 1px solid #cfd5df;
+    border-radius: 16px;
+    background: var(--white);
+    color: var(--main-blue);
+    font-size: 0.88rem;
+}
+.jump:hover { background: var(--accent-blue); }
+.card { scroll-margin-top: 12px; }
+.title-controls { gap: 12px 22px; align-items: flex-end; }
+
+.filters-toggle { display: none; }
+@media (max-width: 650px) {
+    .filters-toggle {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        width: 100%;
+        margin: 0 0 8px;
+        padding: 10px 12px;
+        border: 1px solid #cfd5df;
+        border-radius: 8px;
+        background: var(--white);
+        color: var(--accent-grey);
+        font-size: 0.92rem;
+        text-align: left;
+    }
+    .filters-toggle::after { content: '▾'; margin-left: auto; color: var(--main-blue); }
+    .filters-toggle[aria-expanded="true"]::after { content: '▴'; }
+    .filters-toggle:hover { background: var(--accent-blue); }
+    .filters:not(.open) { display: none; }
+    .search { width: 100%; }
+    .view-switch button { padding: 7px 11px; font-size: 0.92rem; }
+    .filters { gap: 10px 14px; padding: 10px; }
+    .segmented button { padding: 6px 9px; font-size: 0.88rem; }
+    .date-stepper input[type="date"] { max-width: 150px; }
 }
