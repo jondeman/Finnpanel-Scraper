@@ -4,18 +4,19 @@
     --accent-blue: #e0e7ff;
     --white: #fff;
     --border-grey: #e5e7eb;
-    /* Demo comparison: the two age groups keep these colours everywhere */
-    --under45: #2a78d6;
-    --over45: #eb6834;
+    /* The two age groups keep these colours everywhere. Not blue and red/orange, which read as
+       men and women; light for the younger group, dark for the older. CVD ΔE 37.9 */
+    --under45: #eda100;
+    --over45: #6250d6;
     --size-bar: #898781;
     --muted-text: #6b6a66;
     --rank-top: #52514e;
     --rank-mid: #c3c2b7;
     --rank-low: #f0efec;
-    /* Data sources: validated as a set (CVD all-pairs ΔE 9.1); kept apart from the age-group pair */
-    --src-totaltv: #6250d6;
+    /* Data sources: validated as a set (CVD all-pairs ΔE 9.2); no hue shared with the age groups */
+    --src-totaltv: #2a78d6;
     --src-online: #1baf7a;
-    --src-linear: #eda100;
+    --src-linear: #eb6834;
     --grid: #e1e0d9;
     --baseline: #c3c2b7;
 }

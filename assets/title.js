@@ -2,7 +2,10 @@
 // the online lists (Yle Areena, MTV Katsomo, Ruutu: 3+ since 2024-09-02, every demo since
 // 2026-10-07) and its linear airings (the weekly broadcast lists Finnpanel keeps, 10 weeks back).
 
-const SOURCE_COLORS = {totaltv: '#6250d6', online: '#1baf7a', tv: '#eda100'};
+// Colours come from the stylesheet, so each is defined once (assets/dashboard.css)
+const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const SOURCE_COLORS = {totaltv: cssVar('--src-totaltv'), online: cssVar('--src-online'), tv: cssVar('--src-linear')};
+const AGE_COLORS = {'Alle 45': cssVar('--under45'), '45+': cssVar('--over45')};
 const titleState = {key: null, demo: '3+', range: 'all', window: '14D', mix: null, dataTab: 'tv', showAll: {}};
 const RANGE_DAYS = {'90': 90, '365': 365, all: null};
 
@@ -180,7 +183,7 @@ function drawTitle(page, title, history) {
     mixCard.appendChild(mixChart);
     page.appendChild(mixCard);
     const mixRows = titleState.mix === 'totaltv' ? title.totaltv : onlineRows;
-    const mixSeries = [['Alle 45', 'Under 45', '#2a78d6'], ['45+', '45+', '#eb6834']].map(([demoName, label, color]) => ({
+    const mixSeries = [['Alle 45', 'Under 45', AGE_COLORS['Alle 45']], ['45+', '45+', AGE_COLORS['45+']]].map(([demoName, label, color]) => ({
         id: demoName, label, color, kind: 'line', gapDays: 2,
         points: byDateBest(mixRows.filter(row => row.Demo === demoName)).map(row => {
             return {t: parseIso(rowWindow(row).end).getTime(), y: Number(row.Viewers), lines: [`#${row.GroupRank || row.ServiceRank} at ${row.Service}`]};

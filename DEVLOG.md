@@ -149,12 +149,17 @@ ending two days before the list date, as the headers showed on 2026-08-21 and
 the row's position by viewers within its service's list (ties share a rank)
 rather than writing a derived value into the data.
 
-**Colours.** Under 45 / 45+ keep blue and orange. The sources take violet
-`#6250d6` (Total TV), aqua `#1baf7a` (online) and yellow `#eda100` (linear),
-validated as a set: all-pairs CVD ΔE 9.1, normal-vision 22.9. A fourth hue for
-online 90 days fell to CVD ΔE 6.1, so 90 days is a switch instead. Aqua and
-yellow are under 3:1 on white, so lines carry end labels and every value is in a
-table.
+**Colours.** The age groups were blue (under 45) and orange (45+) since
+2026-10-07, but blue against red or orange reads as men and women. Now yellow
+`#eda100` for under 45 and violet `#6250d6` for 45+: no gender reading, light for
+the younger group and dark for the older, and far apart (CVD ΔE 37.9,
+normal-vision 42.1). The sources take the hues the age groups left: blue
+`#2a78d6` (Total TV), aqua `#1baf7a` (online) and orange `#eb6834` (linear),
+validated as a set (all-pairs CVD ΔE 9.2, normal-vision 24.0), so no hue means
+two things on a title page. A fourth source hue for online 90 days fails the
+floors, so 90 days is a switch instead. Yellow and aqua are under 3:1 on white,
+so every bar and line carries a visible label and every value is in a table.
+The colours are defined once, as CSS variables in `assets/dashboard.css`.
 
 **Online episode titles were never saved.** `FPGH.py` read the episode only if
 `len(cols) > 5`, but rows have five cells. `FPTV.py` reads the `Jakso` cell; on
