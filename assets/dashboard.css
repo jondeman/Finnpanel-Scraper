@@ -380,14 +380,6 @@ footer {
 }
 .tabs a:hover { color: var(--main-blue); }
 .tabs a[aria-current="true"] { color: var(--main-blue); border-bottom-color: var(--main-blue); }
-.tabs .tab-new {
-    margin-left: 6px;
-    padding: 1px 6px;
-    border-radius: 8px;
-    background: var(--accent-blue);
-    font-size: 0.72rem;
-    vertical-align: 2px;
-}
 #listMessage {
     margin: 0 0 12px;
     padding: 10px 14px;
