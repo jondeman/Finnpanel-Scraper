@@ -92,12 +92,19 @@ class SeriesRatingsTest(unittest.TestCase):
         # Archive row without ServiceRank: position by viewers within MTV Katsomo's list
         self.assertEqual(weeks['2026-W46']['online']['service_rank'], 2)  # list of 17 Nov, window to 15 Nov
 
-    def test_not_on_total_tv_gives_cut_off(self):
+    def test_lists_the_series_is_not_on_are_not_mentioned(self):
         result = self.result('Pimeä Puoli')
         self.assertEqual(result['group'], 'Sanoma')
         self.assertEqual(result['matched']['tv'], [])
-        self.assertIn("Not in Nelonen's Total TV top 20 (3+ cut-off 200,000).", result['note'])
-        self.assertIn('Online Ruutu 39,000 (#30).', result['note'])
+        self.assertEqual(result['note'], 'Finnpanel 9-22 Nov 2026: Online Ruutu 39,000 (#30).')
+        for word in ('Not ', 'cut-off', 'Total TV', 'TV airing'):
+            self.assertNotIn(word, result['note'])
+
+    def test_series_on_no_list_gets_no_note(self):
+        result = self.result('Ei Tällaista Sarjaa')
+        self.assertEqual(result['note'], '')
+        self.assertEqual(result['summary_note'], '')
+        self.assertEqual(result['mentions'], [])
 
     def test_since_drops_older_lists(self):
         weeks = self.result('Koko Suomi leipoo', since=date(2026, 11, 16))['weeks']

@@ -8,7 +8,8 @@ the series asked for:
   * the online (14-day) and linear (weekly) figures for the same window,
   * the best "mention" (e.g. "#12 on MTV's Total TV top 20"),
   * a week-by-week history since --since,
-  * a one-line English note for Quickbase (TX Notes).
+  * a one-line English note for Quickbase (TX Notes). It names only the lists the series is on;
+    a series on no list gets no note.
 
 Standard library only, so it runs anywhere with Python 3.8+. Data comes from this checkout when the
 script sits next to data/manifest.json, otherwise from GitHub (the repository is public).
@@ -216,7 +217,7 @@ def analyse(data, names, excludes=(), since=None, as_of=None, group=None):
     totaltv_rows = [r for r in totaltv_all if match(r['Program'])]
     online_rows = [r for r in online_all if match(r['Program'])]
 
-    # Which channel group the series belongs to, for "not on the list" lines
+    # Which channel group the series belongs to
     groups = [r['Group'] for r in totaltv_rows] + [GROUP_OF_SERVICE.get(r['Service']) for r in online_rows] \
         + [r['Group'] for r in tv_rows if r['Group']]
     group = group or (max(set(g for g in groups if g), key=groups.count) if any(groups) else None)
@@ -241,8 +242,7 @@ def analyse(data, names, excludes=(), since=None, as_of=None, group=None):
         sample = next(r for r in (totaltv_all or online_all) if r['Date'] == listed)
         start, end = window_of(sample)
         snapshot = {'list_date': listed, 'start': start.isoformat(), 'end': end.isoformat(),
-                    'window': window_text(start, end), 'totaltv': [], 'online': [], 'linear': [],
-                    'cutoff': {}}
+                    'window': window_text(start, end), 'totaltv': [], 'online': [], 'linear': []}
         for demo in DEMOS:
             for row in totaltv_rows:
                 if row['Date'] == listed and row['Demo'] == demo:
@@ -250,11 +250,6 @@ def analyse(data, names, excludes=(), since=None, as_of=None, group=None):
                         'demo': demo, 'viewers': to_int(row['Viewers']), 'episode': row['Episode'],
                         'group': row['Group'], 'group_rank': to_int(row['GroupRank']), 'rank': to_int(row['Rank']),
                         'population': to_int(row['Population'])})
-            if group:
-                group_list = [to_int(r['Viewers']) for r in totaltv_all
-                              if r['Date'] == listed and r['Demo'] == demo and r['Group'] == group]
-                if group_list:
-                    snapshot['cutoff'][demo] = min(group_list)
         snapshot['online90'] = []
         for row in online_rows:
             if row['Date'] == listed:
@@ -338,13 +333,13 @@ def analyse(data, names, excludes=(), since=None, as_of=None, group=None):
 
 
 def note(result):
-    """One English line for Quickbase: short factual phrases, no em dashes."""
+    """One English line for Quickbase: short factual phrases, no em dashes. Only lists the series is on
+    are mentioned; a series on none of them gets no note at all (empty string)."""
     snapshot = result['snapshot']
     if not snapshot:
         return ''
     parts = [f"Finnpanel {snapshot['window']}:"]
     tt = {e['demo']: e for e in snapshot['totaltv']}
-    group = result['group_name']
     if '3+' in tt:
         e = tt['3+']
         parts.append(f"Total TV {num(e['viewers'])} avg viewers (3+, most-watched episode), "
@@ -354,13 +349,8 @@ def note(result):
             parts.append(f"Under 45: {num(young['viewers'])} (#{young['group_rank']}).")
     elif tt:
         e = min(tt.values(), key=lambda e: e['group_rank'])
-        cutoff = snapshot['cutoff'].get('3+')
-        parts.append(f"Total TV {num(e['viewers'])} among {DEMO_LABELS[e['demo']]} "
-                     f"(#{e['group_rank']} on {possessive(GROUP_NAMES[e['group']])} top 20); "
-                     f"not in the 3+ top 20" + (f" (cut-off {num(cutoff)})." if cutoff else '.'))
-    elif group and snapshot['cutoff'].get('3+'):
-        parts.append(f"Not in {possessive(group)} Total TV top 20 "
-                     f"(3+ cut-off {num(snapshot['cutoff']['3+'])}).")
+        parts.append(f"Total TV {num(e['viewers'])} among {DEMO_LABELS[e['demo']]}, "
+                     f"#{e['group_rank']} on {possessive(GROUP_NAMES[e['group']])} Total TV top 20.")
     if snapshot['linear']:
         a = best_airing(snapshot['linear'])
         rank = f", #{a['ChannelRank']} on {possessive(a['Channel'])} weekly top 20" if a['ChannelRank'] else ''
@@ -373,16 +363,7 @@ def note(result):
     elif online90:
         e = max(online90, key=lambda e: e['viewers'])
         parts.append(f"Online {e['service']} {num(e['viewers'])} over 90 days (#{e['service_rank']}).")
-    if len(parts) <= 2 and not snapshot['totaltv'] and not snapshot['linear'] and not online:
-        last = result['weeks'][-1] if result['weeks'] else None
-        if last:
-            figures = [f"TV {last['linear']['best']}" if 'linear' in last else None,
-                       f"online {last['online']['service']} {num(last['online']['viewers'])}"
-                       if 'online' in last else None]
-            parts.append(f"Last listed week {last['week'][-2:]}: " + ', '.join(f for f in figures if f) + '.')
-        elif len(parts) == 1:
-            parts.append('Not on any Finnpanel list.')
-    return ' '.join(parts)
+    return ' '.join(parts) if len(parts) > 1 else ''
 
 
 def season(history, totaltv_rows):
@@ -446,20 +427,19 @@ def print_report(result, out=sys.stdout):
             w(f"    {e['demo']:8} {num(e['viewers']):>10}  #{e['group_rank']} on {GROUP_NAMES[e['group']]} top 20"
               f"  (#{e['rank']} of all three)  ep: {e['episode'] or '-'}\n")
         if not s['totaltv']:
-            cut = ', '.join(f"{d} {num(v)}" for d, v in s['cutoff'].items())
-            w(f"    not on the lists" + (f" (group top 20 cut-off: {cut})" if cut else '') + '\n')
+            w('    -\n')
         w('  Online 14 days:\n')
         for e in s['online']:
             w(f"    {e['demo']:8} {num(e['viewers']):>10}  #{e['service_rank']} on {e['service']}\n")
         if not s['online']:
-            w('    not on the lists\n')
+            w('    -\n')
         w('  Linear airings in the window:\n')
         for a in sorted(s['linear'], key=lambda a: (a['Date'], a['Time'])):
             w(f"    {airing_text(a)}  reach {num(to_int(a['Reach']))}, #{a['ChannelRank'] or '-'} on channel"
               + (f", top 50 #{a['Top50Rank']}" if a['Top50Rank'] else '')
               + (f", top 100 #{a['Top100Rank']}" if a['Top100Rank'] else '') + '\n')
         if not s['linear']:
-            w('    none in the channel top 20s\n')
+            w('    -\n')
     w('\nMentions (best first):\n')
     for m in result['mentions'] or ['(none)']:
         w(f'  - {m}\n')
@@ -473,8 +453,9 @@ def print_report(result, out=sys.stdout):
           f"{num(on['viewers']) if on else '-':>12}  "
           f"{(li['best'] + (' #' + str(li['channel_rank']) if li['channel_rank'] else '')) if li else '-'}\n")
     w(f"\nDashboard: {result['dashboard']}\n")
-    w(f"\nQuickbase note (on air):\n{result['note']}\n")
-    w(f"\nQuickbase note (season finished):\n{result['summary_note']}\n")
+    # An empty note means the series is on no list: nothing is written about it
+    w(f"\nQuickbase note (on air):\n{result['note'] or '(none: not on any list, write nothing)'}\n")
+    w(f"\nQuickbase note (season finished):\n{result['summary_note'] or '(none: not on any list, write nothing)'}\n")
 
 
 def main(argv=None):
