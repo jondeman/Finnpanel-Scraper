@@ -23,29 +23,35 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install requests beautifulsoup4 pandas openpyxl PyGithub numpy
+        pip install -r requirements.txt
 
-    - name: Run Finnpanel scraper (creates/updates files via GitHub API)
-      run: python FPGH.py
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # Online, Total TV and weekly TV lists into data/ as CSV. Each part runs even if another
+    # fails; the script exits non-zero after writing what it got.
+    - name: Collect Finnpanel lists
+      run: python FPTV.py
 
-    - name: Update README
+    # Runs even when collection failed, so partial data is kept (Total TV has no archive at
+    # Finnpanel: a missed day is lost for good). The run still goes red.
+    - name: Update README and commit the data
+      if: ${{ !cancelled() }}
       run: |
-        # Hae viimeisin, koska edellinen steppi teki commitit API:n kautta
-        git fetch origin
-        git pull --rebase
-
         echo "# Finnpanel Data" > README.md
         echo "" >> README.md
         echo "Viimeisin päivitys: $(date -u)" >> README.md
         echo "" >> README.md
-        echo "## Saatavilla olevat tiedostot" >> README.md
-        echo "- 14D_Finnpanel_data_$(date -u +%Y-%m-%d).xlsx" >> README.md
-        echo "- 90D_Finnpanel_data_$(date -u +%Y-%m-%d).xlsx" >> README.md
+        echo "Dashboard: https://jondeman.github.io/Finnpanel-Scraper/" >> README.md
+        echo "" >> README.md
+        echo "## Tiedostot" >> README.md
+        echo "- data/online/$(date -u +%Y-%m).csv: verkkopalveluiden listat (Yle Areena, MTV Katsomo, Ruutu), 14 ja 90 päivää, 2.9.2024 alkaen" >> README.md
+        echo "- data/totaltv/$(date -u +%Y-%m).csv: Total TV (tv + verkko), 14 päivää, 24.11.2026 alkaen" >> README.md
+        echo "- data/tv/$(date -u +%Y).csv: viikoittaiset tv-lähetykset (top 100, top 50, kanavien top 20), viikosta 38/2026" >> README.md
+        echo "- archive/xlsx/: vanhat päivittäiset .xlsx-tiedostot 2024-08-30 – 2026-11-24 (sama data on data/online/-kansiossa)" >> README.md
+        echo "" >> README.md
+        echo "Muutokset ja päätökset: [DEVLOG.md](DEVLOG.md)" >> README.md
 
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add README.md
-        git commit -m "Update README" || echo "No changes to commit"
-        git push origin || echo "No changes to push"
+        git add README.md data/
+        git commit -m "Update data $(date -u +%Y-%m-%d)" || echo "No changes to commit"
+        git pull --rebase
+        git push origin

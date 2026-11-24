@@ -5,950 +5,131 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finnpanel Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        :root {
-            --main-blue: #0f2d52;
-            --accent-grey: #23272f;
-            --accent-blue: #e0e7ff;
-            --white: #fff;
-            --border-grey: #e5e7eb;
-            /* Demo comparison: the two age groups keep these colours everywhere */
-            --under45: #2a78d6;
-            --over45: #eb6834;
-            --size-bar: #898781;
-            --muted-text: #6b6a66;
-            --rank-top: #52514e;
-            --rank-mid: #c3c2b7;
-            --rank-low: #f0efec;
-        }
-        body { 
-            font-family: Arial, sans-serif; 
-            margin: 0; 
-            padding: 20px; 
-            background: #f8fafc;
-            color: var(--accent-grey);
-        }
-        h1 {
-            font-size: 2.2rem;
-            color: var(--main-blue);
-            margin-bottom: 0.1em;
-            margin-top: 0.4em;
-        }
-        .subtitle {
-            font-size: 1.1rem;
-            font-weight: 500;
-            color: var(--accent-grey);
-            background: var(--accent-blue);
-            display: inline-block;
-            border-radius: 7px;
-            padding: 4px 14px 3px 10px;
-            margin-bottom: 1.1em;
-            margin-left: 2px;
-        }
-        .controls { 
-            margin-bottom: 20px; 
-            background: var(--white);
-            border-radius: 8px;
-            box-shadow: 0 2px 8px #0001;
-            padding: 14px 12px 10px 12px;
-        }
-        select, button, input[type="date"] { 
-            margin-right: 10px; 
-            padding: 7px 12px;
-            border-radius: 5px;
-            border: 1px solid var(--border-grey);
-            background: var(--white);
-            font-size: 1rem;
-            color: var(--accent-grey);
-        }
-        button {
-            background: var(--main-blue);
-            color: var(--white);
-            border: none;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        button:hover {
-            background: #1d4ed8;
-        }
-        #loading { 
-            display: none; 
-            margin-bottom: 10px; 
-            color: var(--main-blue);
-        }
-        #timeframe { 
-            font-weight: bold; 
-            margin-bottom: 10px; 
-            color: var(--accent-grey);
-        }
-        #demoNote {
-            display: none;
-            margin-top: 8px;
-            font-size: 0.92rem;
-            color: #555;
-        }
-        table { 
-            border-collapse: collapse; 
-            width: 100%; 
-            background: var(--white);
-            border-radius: 10px;
-            box-shadow: 0 1px 7px #0001;
-            overflow: hidden;
-        }
-        th, td { 
-            border: 1px solid var(--border-grey); 
-            padding: 9px 8px; 
-            text-align: left; 
-        }
-        th { 
-            background-color: var(--accent-blue); 
-            color: var(--accent-grey); 
-            font-weight: bold;
-        }
-        tr:nth-child(even) { 
-            background-color: #f3f7fb; 
-        }
-        tr:hover td {
-            background: #f1f5ff;
-            transition: background 0.15s;
-        }
-        /* Segmented controls: List / Compare demos, and the sort buttons */
-        .segmented {
-            display: inline-flex;
-            flex-wrap: wrap;
-            gap: 2px;
-            padding: 3px;
-            border-radius: 8px;
-            background: #eef1f6;
-            vertical-align: middle;
-        }
-        .controls .segmented { margin-right: 10px; }
-        .segmented button {
-            margin: 0;
-            padding: 6px 12px;
-            border-radius: 6px;
-            background: transparent;
-            color: var(--accent-grey);
-            font-size: 0.95rem;
-        }
-        .segmented button:hover { background: #e1e6ef; }
-        .segmented button[aria-pressed="true"] {
-            background: var(--white);
-            color: var(--main-blue);
-            font-weight: bold;
-            box-shadow: 0 1px 3px #0002;
-        }
-        /* Demo comparison */
-        #compareMessage {
-            margin: 12px 0;
-            padding: 18px;
-            border-radius: 10px;
-            background: var(--white);
-            color: var(--muted-text);
-            box-shadow: 0 1px 7px #0001;
-        }
-        .compare-toolbar {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 10px 18px;
-            margin-bottom: 12px;
-        }
-        .toolbar-label { font-size: 0.9rem; color: var(--muted-text); }
-        .check { display: inline-flex; align-items: center; gap: 6px; font-size: 0.92rem; }
-        .pyramid {
-            padding: 6px 16px 16px;
-            border-radius: 10px;
-            background: var(--white);
-            box-shadow: 0 1px 7px #0001;
-        }
-        .pyramid-head, .row-btn {
-            display: grid;
-            grid-template-columns: 2.4em minmax(130px, 1fr) minmax(0, 2.6fr);
-            column-gap: 14px;
-            align-items: center;
-        }
-        .pyramid-head {
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border-grey);
-            font-size: 0.85rem;
-            font-weight: bold;
-            color: var(--muted-text);
-        }
-        .pyramid-head .pos-head { text-align: right; }
-        .fly { display: grid; grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr); align-items: center; }
-        .pyramid-head .side { display: inline-flex; align-items: center; gap: 6px; }
-        .pyramid-head .side.left { justify-content: flex-end; padding-right: 10px; }
-        .pyramid-head .side.right { padding-left: 10px; }
-        .key { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
-        #pyramid { margin: 0; padding: 0; list-style: none; }
-        .row-btn {
-            width: 100%;
-            margin: 0;
-            padding: 6px 0;
-            border-radius: 6px;
-            background: transparent;
-            color: var(--accent-grey);
-            text-align: left;
-            font: inherit;
-        }
-        .row-btn:hover { background: #f4f7fc; }
-        .row-btn[aria-expanded="true"] { background: #eaf0fa; }
-        .row-btn:focus-visible { outline: 2px solid var(--main-blue); outline-offset: -2px; }
-        .pos {
-            text-align: right;
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--main-blue);
-            font-variant-numeric: tabular-nums;
-        }
-        .pos.none { color: var(--rank-mid); }
-        .who { min-width: 0; }
-        .name { display: block; font-weight: bold; overflow-wrap: anywhere; }
-        .meta { display: block; font-size: 0.82rem; color: var(--muted-text); }
-        .axis { align-self: stretch; width: 1px; background: var(--rank-mid); }
-        .half { display: flex; align-items: center; gap: 6px; height: 24px; }
-        .half.left { justify-content: flex-end; padding-right: 2px; }
-        .half.right { padding-left: 2px; }
-        .bar {
-            flex: none;
-            height: 14px;
-            width: calc((100% - 6em) * var(--w));
-            animation: grow 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-            animation-delay: var(--delay, 0s);
-        }
-        .half.left .bar { background: var(--under45); border-radius: 4px 0 0 4px; transform-origin: right center; }
-        .half.right .bar { background: var(--over45); border-radius: 0 4px 4px 0; transform-origin: left center; }
-        .bar.approx { opacity: 0.45; }
-        .val { font-size: 0.85rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
-        .val.missing { color: var(--muted-text); }
-        .rk {
-            display: inline-block;
-            margin: 0 3px;
-            padding: 0 5px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            line-height: 1.6;
-            color: var(--accent-grey);
-        }
-        .rk.top { background: var(--rank-top); color: var(--white); }
-        .rk.mid { background: var(--rank-mid); }
-        .rk.low { background: var(--rank-low); }
-        @keyframes grow { from { transform: scaleX(0); } }
-        @keyframes rise { from { opacity: 0; transform: translateY(-6px); } }
-        @media (prefers-reduced-motion: reduce) {
-            .bar, .detail { animation: none; }
-        }
-        .show-all {
-            display: block;
-            margin: 14px auto 0;
-            border: 1px solid var(--border-grey);
-            background: var(--white);
-            color: var(--main-blue);
-        }
-        .show-all:hover { background: var(--accent-blue); }
-        .compare-footnote { margin: 12px 2px 0; font-size: 0.85rem; color: var(--muted-text); }
-        .seg-under45 { background: var(--under45); }
-        .seg-over45 { background: var(--over45); }
-        .track-seg:first-child { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
-        .track-seg:last-child { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
-        /* Detail card */
-        .detail {
-            margin: 4px 0 12px;
-            padding: 20px;
-            border: 1px solid var(--border-grey);
-            border-radius: 12px;
-            background: #f8fafc;
-            animation: rise 0.25s ease-out;
-        }
-        .detail-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px 24px; }
-        .detail h3 { margin: 0 0 4px; font-size: 1.4rem; color: var(--main-blue); }
-        .detail-meta { font-size: 0.9rem; color: var(--muted-text); }
-        .hero { text-align: right; }
-        .hero-num { display: block; font-size: 2.6rem; font-weight: bold; line-height: 1; color: var(--main-blue); }
-        .hero-label { font-size: 0.85rem; color: var(--muted-text); }
-        .split-big { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; margin: 20px 0; }
-        .split-big .pct { font-size: 1.6rem; font-weight: bold; line-height: 1.1; }
-        .split-big .pct.right { text-align: right; }
-        .split-big .pct small { display: block; font-size: 0.8rem; font-weight: normal; color: var(--muted-text); }
-        .split-track { display: flex; gap: 2px; height: 18px; }
-        .rank-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-        .rank-tile {
-            position: relative;
-            padding: 10px 12px;
-            border: 1px solid var(--border-grey);
-            border-top: 4px solid var(--size-bar);
-            border-radius: 8px;
-            background: var(--white);
-        }
-        .rank-tile.under45 { border-top-color: var(--under45); }
-        .rank-tile.over45 { border-top-color: var(--over45); }
-        .rank-tile .big { display: block; font-size: 1.8rem; font-weight: bold; line-height: 1.2; }
-        .rank-tile .lbl { display: block; font-size: 0.85rem; color: var(--muted-text); }
-        .rank-tile .sub { display: block; margin-top: 4px; font-size: 0.85rem; }
-        .rank-tile .episode { display: block; margin-top: 4px; font-size: 0.78rem; color: var(--muted-text); overflow-wrap: anywhere; }
-        .badge {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            padding: 1px 7px;
-            border-radius: 10px;
-            background: var(--main-blue);
-            color: var(--white);
-            font-size: 0.72rem;
-        }
-        .detail-note { margin: 12px 0 0; font-size: 0.88rem; color: var(--muted-text); }
-        #tooltip {
-            position: absolute;
-            z-index: 10;
-            max-width: 280px;
-            padding: 6px 9px;
-            border-radius: 5px;
-            background: var(--accent-grey);
-            color: var(--white);
-            font-size: 0.85rem;
-            pointer-events: none;
-        }
-        /* Footer styles */
-        footer {
-            margin-top: 36px;
-            padding: 17px 0 8px 0;
-            text-align: center;
-            font-size: 0.99rem;
-            color: #777;
-        }
-        .footer-link {
-            color: #1e40af;
-            text-decoration: none;
-            border-bottom: 1px dotted var(--main-blue);
-            transition: color 0.2s;
-        }
-        .footer-link:hover {
-            color: #111;
-        }
-        @media (max-width: 650px) {
-            h1 { font-size: 1.3rem; }
-            .subtitle { font-size: 0.98rem; }
-            th, td { font-size: 0.94rem; }
-            .controls { font-size: 0.97rem; }
-            /* Comparison on phones */
-            .pyramid { padding: 4px 8px 12px; }
-            .pyramid-head, .row-btn { grid-template-columns: 1.9em minmax(0, 1fr); column-gap: 8px; }
-            .pyramid-head .fly, .row-btn .fly { grid-column: 1 / -1; }
-            .pyramid-head .who-head, .pyramid-head .pos-head { display: none; }
-            #compareSort button { padding: 6px 8px; font-size: 0.88rem; }
-            .rank-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .hero { text-align: left; }
-            .detail { padding: 14px; }
-        }
-    </style>
+    <link rel="stylesheet" href="assets/dashboard.css?v=2026-11-24">
 </head>
 <body>
-    <h1>Finnpanel Dashboard</h1>
-    <div class="subtitle">Yle Areenan, MTV Katsomon ja Ruudun katsotuimmat ohjelmat 2.9.24 alkaen</div>
-    <div id="timeframe"></div>
-    
-    <div class="controls">
-        <div class="segmented" role="group" aria-label="View">
-            <button type="button" id="viewList" aria-pressed="true">List</button>
-            <button type="button" id="viewCompare" aria-pressed="false">Compare demos</button>
+    <div class="topbar">
+        <div>
+            <h1><a href="#/online">Finnpanel Dashboard</a></h1>
+            <div class="subtitle" id="subtitle">Yle Areenan, MTV Katsomon ja Ruudun katsotuimmat ohjelmat 2.9.24 alkaen</div>
         </div>
-        <input type="date" id="dateSelect">
-        <select id="dataRange">
-            <option value="14D">14 Days</option>
-            <option value="90D">90 Days</option>
-        </select>
-        <select id="service">
-            <option value="all">All Services</option>
-            <option value="Ruutu">Ruutu</option>
-            <option value="MTV Katsomo">MTV Katsomo</option>
-            <option value="Yle Areena">Yle Areena</option>
-        </select>
-        <select id="demo" title="Target group (kohderyhmä)"></select>
-        <button onclick="downloadXLSX()">Download Data</button>
-        <div id="demoNote">Only the 3+ demo was collected for this date.</div>
+        <div class="title-search">
+            <label for="titleSearch" class="toolbar-label">Title history</label><br>
+            <input id="titleSearch" type="search" list="titleOptions" placeholder="Find a title…" autocomplete="off">
+            <datalist id="titleOptions"></datalist>
+        </div>
     </div>
 
-    <div id="loading">Loading data...</div>
+    <nav class="tabs" aria-label="Data">
+        <a href="#/online" data-source="online" aria-current="true">Online services</a>
+        <a href="#/totaltv" data-source="totaltv" aria-current="false">Total TV <span class="tab-new">TV + online</span></a>
+    </nav>
 
-    <table id="dataTable">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Demo</th>
-                <th>Rank</th>
-                <th>Service</th>
-                <th>Program</th>
-                <th>Duration</th>
-                <th>Viewers</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-    </table>
+    <main>
+        <section id="listsPage">
+            <div id="timeframe"></div>
 
-    <section id="compareView" hidden>
-        <div id="compareMessage" hidden></div>
-        <div id="compareContent">
-            <div class="compare-toolbar">
-                <span class="toolbar-label">Sort by</span>
-                <div class="segmented" id="compareSort" role="group" aria-label="Sort shows">
-                    <button type="button" data-sort="total" aria-pressed="true">Total</button>
-                    <button type="button" data-sort="under45" aria-pressed="false">Under 45</button>
-                    <button type="button" data-sort="over45" aria-pressed="false">45+</button>
-                    <button type="button" data-sort="young" aria-pressed="false">Youngest</button>
-                    <button type="button" data-sort="old" aria-pressed="false">Oldest</button>
-                </div>
-                <label class="check"><input type="checkbox" id="includeOutside"> Include shows that only made a demo list</label>
+            <div class="controls">
+                <div class="segmented" id="viewSwitch" role="group" aria-label="View"></div>
+                <input type="date" id="dateSelect" aria-label="List date">
+                <select id="dataRange" aria-label="Period">
+                    <option value="14D">14 Days</option>
+                    <option value="90D">90 Days</option>
+                </select>
+                <select id="service" aria-label="Broadcaster"></select>
+                <select id="demo" title="Target group (kohderyhmä)" aria-label="Demo"></select>
+                <button type="button" id="downloadBtn">Download Data</button>
+                <div id="demoNote">Only the 3+ demo was collected for this date.</div>
             </div>
-            <div class="pyramid">
-                <div class="pyramid-head" aria-hidden="true">
-                    <span class="pos-head">#</span>
-                    <span class="who-head">Show</span>
-                    <span class="fly">
-                        <span class="side left">Under 45 viewers <i class="key seg-under45"></i></span>
-                        <span class="axis"></span>
-                        <span class="side right"><i class="key seg-over45"></i> 45+ viewers</span>
-                    </span>
+
+            <div id="loading">Loading data...</div>
+            <div id="listMessage" role="status" hidden></div>
+
+            <div id="listsBody">
+                <div class="table-scroll" id="dataTable">
+                    <table>
+                        <thead id="tableHead"></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
                 </div>
-                <ol id="pyramid"></ol>
-                <button type="button" class="show-all" id="showAll" hidden></button>
+
+                <section id="tvView" class="tv-panel" hidden>
+                    <p class="tv-summary" id="tvSummary"></p>
+                    <div class="compare-toolbar">
+                        <span class="toolbar-label">Sort by</span>
+                        <div class="segmented" id="tvSort" role="group" aria-label="Sort programmes">
+                            <button type="button" data-sort="total" aria-pressed="true">TV + online</button>
+                            <button type="button" data-sort="online" aria-pressed="false">Online</button>
+                            <button type="button" data-sort="share" aria-pressed="false">Online share</button>
+                        </div>
+                    </div>
+                    <div class="tv-legend" aria-hidden="true">
+                        <span><i class="key seg-online"></i> Online only: Yle Areena, MTV Katsomo or Ruutu, same 14 days</span>
+                        <span><i class="key seg-tv"></i> The rest of the audience: TV, live and recorded</span>
+                    </div>
+                    <ol id="tvBars"></ol>
+                    <button type="button" class="show-all" id="tvShowAll" hidden></button>
+                    <p class="compare-footnote">
+                        Total TV counts each programme's most-watched episode over the 14 days, on TV and online together.
+                        The online part is the same programme in the online-only list for the same 14 days. That list names its
+                        own most-watched episode, so the share is approximate, and ≈ marks a known different episode. A programme
+                        missing from the online top 20 has at most the 20th place's audience online. Hover a bar for the
+                        programme's biggest linear airing in the window. Select a title for its full history.
+                    </p>
+                </section>
+
+                <section id="compareView" hidden>
+                    <div id="compareMessage" hidden></div>
+                    <div id="compareContent">
+                        <div class="compare-toolbar">
+                            <span class="toolbar-label">Sort by</span>
+                            <div class="segmented" id="compareSort" role="group" aria-label="Sort shows">
+                                <button type="button" data-sort="total" aria-pressed="true">Total</button>
+                                <button type="button" data-sort="under45" aria-pressed="false">Under 45</button>
+                                <button type="button" data-sort="over45" aria-pressed="false">45+</button>
+                                <button type="button" data-sort="young" aria-pressed="false">Youngest</button>
+                                <button type="button" data-sort="old" aria-pressed="false">Oldest</button>
+                            </div>
+                            <label class="check"><input type="checkbox" id="includeOutside"> Include shows that only made a demo list</label>
+                        </div>
+                        <div class="pyramid">
+                            <div class="pyramid-head" aria-hidden="true">
+                                <span class="pos-head">#</span>
+                                <span class="who-head">Show</span>
+                                <span class="fly">
+                                    <span class="side left">Under 45 viewers <i class="key seg-under45"></i></span>
+                                    <span class="axis"></span>
+                                    <span class="side right"><i class="key seg-over45"></i> 45+ viewers</span>
+                                </span>
+                            </div>
+                            <ol id="pyramid"></ol>
+                            <button type="button" class="show-all" id="showAll" hidden></button>
+                        </div>
+                        <p class="compare-footnote">
+                            The big number is the show's rank among all viewers (3+). Each bar shows how many viewers the show
+                            has in that age group, with its rank in that group's list (dark = top 10). Under 45 and 45+ together
+                            make up the 3+ audience, so a figure missing from one list is worked out from the other two and
+                            marked ≈. Select a row for details, or a name for the title's full history.
+                        </p>
+                    </div>
+                </section>
             </div>
-            <p class="compare-footnote">
-                The big number is the show's rank among all viewers (3+). Each bar shows how many viewers the show
-                has in that age group, with its rank in that group's list (dark = top 10). Under 45 and 45+ together
-                make up the 3+ audience, so a figure missing from one list is worked out from the other two and
-                marked ≈. Select a show for details.
-            </p>
-        </div>
-    </section>
+        </section>
+
+        <section id="titlePage" hidden></section>
+    </main>
     <div id="tooltip" role="tooltip" hidden></div>
 
     <footer>
-        Vibe coded by 
+        Vibe coded by
         <a class="footer-link" href="https://www.linkedin.com/in/joonakortesmaki/" target="_blank" rel="noopener">Joona Kortesmäki</a>
     </footer>
 
-    <script>
-        let allData = [];
-        const baseUrl = 'https://raw.githubusercontent.com/jondeman/Finnpanel-Scraper/main/';
-        // Demos in the order the scraper writes them; files from before the demo split only have 3+
-        const demoOrder = ['3+', 'Alle 45', '45+', '25-64'];
-        let hasDemoData = false;
-        let comparison = [];
-        let currentView = 'list';
-        let openShowKey = null;
-
-        // Set default date to yesterday
-        const yesterday = new Date(new Date().setDate(new Date().getDate() - 1));
-        document.getElementById('dateSelect').value = yesterday.toISOString().split('T')[0];
-
-        function formatDate(date) {
-            const d = new Date(date);
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
-        function getStartDate(endDate, days) {
-            const start = new Date(endDate);
-            start.setDate(start.getDate() - days + 1); // +1 because the end date is inclusive
-            return start;
-        }
-
-        function updateTimeframeDisplay() {
-            const endDate = new Date(document.getElementById('dateSelect').value);
-            const days = document.getElementById('dataRange').value === '14D' ? 14 : 90;
-            const startDate = getStartDate(endDate, days);
-            
-            const timeframeElement = document.getElementById('timeframe');
-            timeframeElement.textContent = `Timeframe: ${formatDate(startDate)} - ${formatDate(endDate)}`;
-        }
-
-        async function fetchData() {
-            updateTimeframeDisplay();
-            document.getElementById('loading').style.display = 'block';
-            allData = [];
-            const selectedDate = document.getElementById('dateSelect').value;
-            const dataRange = document.getElementById('dataRange').value;
-            const formattedDate = formatDate(selectedDate);
-            const url = `${baseUrl}${dataRange}_Finnpanel_data_${formattedDate}.xlsx`;
-            
-            try {
-                const response = await fetch(url);
-                if (response.ok) {
-                    const arrayBuffer = await response.arrayBuffer();
-                    const data = new Uint8Array(arrayBuffer);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
-                    
-                    // Assuming the first row is headers
-                    const headers = jsonData[0];
-                    const rows = jsonData.slice(1);
-                    
-                    allData = rows.map(row => {
-                        let obj = {};
-                        headers.forEach((header, index) => {
-                            obj[header] = row[index];
-                        });
-                        obj.Demo = obj.Demo || '3+';
-                        return obj;
-                    });
-                    updateDemoOptions();
-                    comparison = buildComparison(allData);
-                    render();
-                } else {
-                    console.error(`No data available for ${formattedDate}`);
-                    alert(`No data available for ${formattedDate}`);
-                }
-            } catch (error) {
-                console.error(`Failed to fetch data for ${formattedDate}:`, error);
-                alert(`Failed to fetch data for ${formattedDate}`);
-            }
-            document.getElementById('loading').style.display = 'none';
-        }
-
-        function demoSortKey(demo) {
-            const index = demoOrder.indexOf(demo);
-            return index === -1 ? demoOrder.length : index;
-        }
-
-        // Offer only the demos present in the loaded file, keeping the current choice when possible
-        function updateDemoOptions() {
-            const select = document.getElementById('demo');
-            const previous = select.value || '3+';
-            const available = [...new Set(allData.map(row => row.Demo))]
-                .sort((a, b) => demoSortKey(a) - demoSortKey(b));
-
-            select.innerHTML = '';
-            available.forEach(demo => select.add(new Option(`Demo: ${demo}`, demo)));
-            select.value = previous;
-            if (!select.value && available.length > 0) {
-                select.value = available.includes('3+') ? '3+' : available[0];
-            }
-            hasDemoData = available.some(demo => demo !== '3+');
-        }
-
-        function render() {
-            const list = currentView === 'list';
-            document.getElementById('dataTable').hidden = !list;
-            document.getElementById('compareView').hidden = list;
-            document.getElementById('demo').hidden = !list;
-            const onlyAllViewers = allData.length > 0 && !hasDemoData;
-            document.getElementById('demoNote').style.display = list && onlyAllViewers ? 'block' : 'none';
-            if (list) {
-                updateTable();
-            } else {
-                updateCompare();
-            }
-        }
-
-        function setView(view) {
-            currentView = view;
-            document.getElementById('viewList').setAttribute('aria-pressed', String(view === 'list'));
-            document.getElementById('viewCompare').setAttribute('aria-pressed', String(view === 'compare'));
-            render();
-        }
-
-        function updateTable() {
-            const service = document.getElementById('service').value;
-            const demo = document.getElementById('demo').value;
-
-            let filteredData = allData.filter(row => row.Demo === demo);
-            if (service !== 'all') {
-                filteredData = filteredData.filter(row => row.Service === service);
-            }
-
-            const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = '';
-            filteredData.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${row.Date || ''}</td>
-                    <td>${row.Demo || ''}</td>
-                    <td>${row.Rank || ''}</td>
-                    <td>${row.Service || ''}</td>
-                    <td>${row.Program || ''}</td>
-                    <td>${row.Duration || ''}</td>
-                    <td>${(row.Viewers ? parseInt(row.Viewers).toLocaleString() : '')}</td>
-                `;
-                tableBody.appendChild(tr);
-            });
-        }
-
-        // Ruutu titles carry the episode ("Syke - Kausi 24 - Jakso 4 ...") and the most-watched
-        // episode can differ between demos, so shows are matched by series name within a service
-        function seriesName(program) {
-            return String(program || '').split(/ - Kausi \d+/)[0].trim();
-        }
-
-        // One entry per show with its figures in each demo. Alle 45 and 45+ together make up the
-        // 3+ audience, so a figure missing from one of those lists can be worked out from the other two
-        function buildComparison(rows) {
-            const listFloor = {};
-            const shows = new Map();
-            rows.forEach(row => {
-                const viewers = Number(row.Viewers);
-                const rank = Number(row.Rank);
-                if (!viewers) return;
-                const listKey = `${row.Demo}|${row.Service}`;
-                listFloor[listKey] = Math.min(listFloor[listKey] ?? Infinity, viewers);
-                const name = seriesName(row.Program);
-                const key = `${row.Service}|${name}`;
-                if (!shows.has(key)) {
-                    shows.set(key, {key, name, service: row.Service, demos: {}});
-                }
-                const show = shows.get(key);
-                const current = show.demos[row.Demo];
-                if (!current || rank < current.rank) {
-                    show.demos[row.Demo] = {viewers, rank, program: String(row.Program)};
-                }
-            });
-
-            return [...shows.values()].map(show => {
-                const values = {};
-                demoOrder.forEach(demo => {
-                    values[demo] = show.demos[demo] ? show.demos[demo].viewers : null;
-                });
-                const total = values['3+'];
-                const under = values['Alle 45'];
-                const over = values['45+'];
-                const derived = {};
-                if (total !== null && under === null && over !== null) {
-                    values['Alle 45'] = Math.max(total - over, 0);
-                    derived['Alle 45'] = '3+ minus 45+';
-                }
-                if (total !== null && over === null && under !== null) {
-                    values['45+'] = Math.max(total - under, 0);
-                    derived['45+'] = '3+ minus Alle 45';
-                }
-                if (total === null && under !== null && over !== null) {
-                    values['3+'] = under + over;
-                    derived['3+'] = 'Alle 45 plus 45+';
-                }
-                // Each list shows the show's most-watched episode in that demo; when those episodes
-                // differ, the two age groups no longer add up to 3+
-                const mismatch = total !== null && under !== null && over !== null
-                    && Math.abs(under + over - total) > Math.max(2000, total * 0.05);
-                const u = values['Alle 45'];
-                const o = values['45+'];
-                const split = u !== null && o !== null && u + o > 0 ? u / (u + o) : null;
-                const share2564 = values['3+'] && values['25-64'] !== null
-                    ? Math.min(values['25-64'] / values['3+'], 1) : null;
-                const ceilings = {};
-                demoOrder.forEach(demo => {
-                    ceilings[demo] = listFloor[`${demo}|${show.service}`] ?? null;
-                });
-                return {
-                    ...show, values, derived, mismatch, split, share2564, ceilings,
-                    splitApprox: split !== null && (mismatch || 'Alle 45' in derived || '45+' in derived || '3+' in derived),
-                };
-            });
-        }
-
-        function el(tag, className, text) {
-            const node = document.createElement(tag);
-            if (className) node.className = className;
-            if (text !== undefined) node.textContent = text;
-            return node;
-        }
-
-        function thousands(value) {
-            return `${Math.round(value / 1000)}k`;
-        }
-
-        function percent(share) {
-            return `${Math.round(share * 100)}%`;
-        }
-
-        function notListedText(show, demo) {
-            const ceiling = show.ceilings[demo];
-            return ceiling ? `at most ${ceiling.toLocaleString()}` : 'not known';
-        }
-
-        const topRows = 20;
-        let compareSort = 'total';
-        let showAllRows = false;
-
-        function rankShade(rank) {
-            return rank <= 10 ? 'top' : rank <= 30 ? 'mid' : 'low';
-        }
-
-        function sortShows(shows, sort) {
-            const value = (show, demo) => show.values[demo] ?? -1;
-            const byTotal = (a, b) => value(b, '3+') - value(a, '3+');
-            const bySplit = direction => (a, b) => {
-                if (a.split === null || b.split === null) {
-                    return (a.split === null) - (b.split === null) || byTotal(a, b);
-                }
-                return direction * (a.split - b.split) || byTotal(a, b);
-            };
-            const comparers = {
-                total: byTotal,
-                under45: (a, b) => value(b, 'Alle 45') - value(a, 'Alle 45') || byTotal(a, b),
-                over45: (a, b) => value(b, '45+') - value(a, '45+') || byTotal(a, b),
-                young: bySplit(-1),
-                old: bySplit(1),
-            };
-            return shows.sort(comparers[sort]);
-        }
-
-        function shownShows() {
-            const service = document.getElementById('service').value;
-            const includeOutside = document.getElementById('includeOutside').checked;
-            return sortShows(comparison.filter(show => (service === 'all' || show.service === service)
-                && (includeOutside || show.demos['3+'])), compareSort);
-        }
-
-        function updateCompare() {
-            const message = document.getElementById('compareMessage');
-            const content = document.getElementById('compareContent');
-            if (!hasDemoData) {
-                message.textContent = allData.length
-                    ? 'This date only has the 3+ demo. Demo data starts on 2026-10-07, so pick that date or later.'
-                    : 'No data loaded for this date.';
-                message.hidden = false;
-                content.hidden = true;
-                return;
-            }
-            message.hidden = true;
-            content.hidden = false;
-
-            const shows = shownShows();
-
-            // One scale for both sides so under-45 and 45+ bars compare directly
-            const scale = Math.max(1, ...shows.map(show =>
-                Math.max(show.values['Alle 45'] || 0, show.values['45+'] || 0)));
-            const list = document.getElementById('pyramid');
-            list.innerHTML = '';
-            (showAllRows ? shows : shows.slice(0, topRows)).forEach((show, index) => {
-                list.appendChild(renderShowRow(show, scale, index));
-                if (show.key === openShowKey) {
-                    list.appendChild(renderDetail(show));
-                }
-            });
-
-            const more = document.getElementById('showAll');
-            more.hidden = shows.length <= topRows;
-            more.textContent = showAllRows ? `Show top ${topRows}` : `Show all ${shows.length} shows`;
-        }
-
-        function splitTrack(split, className) {
-            const track = el('span', className);
-            [['seg-under45', split], ['seg-over45', 1 - split]].forEach(([segClass, share]) => {
-                if (share <= 0) return;
-                const seg = el('span', `track-seg ${segClass}`);
-                seg.style.flex = `${share} 1 0`;
-                track.appendChild(seg);
-            });
-            return track;
-        }
-
-        function renderShowRow(show, scale, index) {
-            const li = el('li');
-            li.dataset.key = show.key;
-            const button = el('button', 'row-btn');
-            button.type = 'button';
-            button.setAttribute('aria-expanded', String(show.key === openShowKey));
-            button.addEventListener('click', () => toggleDetail(show.key));
-
-            const overall = show.demos['3+'];
-            const pos = el('span', overall ? 'pos' : 'pos none', overall ? String(overall.rank) : '–');
-            pos.dataset.tip = overall ? `#${overall.rank} among all viewers (3+)` : 'Not in the 3+ list';
-
-            const meta = [show.service];
-            if (show.values['3+'] !== null) {
-                meta.push(`${'3+' in show.derived ? '≈' : ''}${thousands(show.values['3+'])} viewers`);
-            }
-            if (show.split !== null) {
-                meta.push(`${show.splitApprox ? '≈' : ''}${percent(show.split)} under 45`);
-            }
-            const who = el('span', 'who');
-            who.append(el('span', 'name', show.name), el('span', 'meta', meta.join(' · ')));
-
-            const fly = el('span', 'fly');
-            fly.append(renderHalf(show, 'Alle 45', 'left', scale, index), el('span', 'axis'),
-                renderHalf(show, '45+', 'right', scale, index));
-            button.append(pos, who, fly);
-            li.appendChild(button);
-            return li;
-        }
-
-        function renderHalf(show, demo, side, scale, index) {
-            const half = el('span', `half ${side}`);
-            const group = demo === 'Alle 45' ? 'Under 45' : '45+';
-            const value = show.values[demo];
-            const entry = show.demos[demo];
-            const val = el('span', 'val');
-            if (value === null) {
-                const ceiling = show.ceilings[demo];
-                val.classList.add('missing');
-                val.textContent = ceiling ? `≤${thousands(ceiling)}` : '–';
-                half.dataset.tip = `${group}: not in the ${demo} list (${notListedText(show, demo)} viewers)`;
-                half.appendChild(val);
-                return half;
-            }
-            const bar = el('span', entry ? 'bar' : 'bar approx');
-            bar.style.setProperty('--w', String(value / scale));
-            bar.style.setProperty('--delay', `${Math.min(index, topRows) * 25}ms`);
-            const amount = el('span', null, `${entry ? '' : '≈'}${thousands(value)}`);
-            if (entry) {
-                const chip = el('b', `rk ${rankShade(entry.rank)}`, `#${entry.rank}`);
-                side === 'left' ? val.append(amount, chip) : val.append(chip, amount);
-                half.dataset.tip = `${group}: ${entry.viewers.toLocaleString()} viewers · #${entry.rank} in ${demo}`;
-            } else {
-                val.appendChild(amount);
-                half.dataset.tip = `${group}: ≈${value.toLocaleString()} viewers, worked out as ${show.derived[demo]}`;
-            }
-            side === 'left' ? half.append(val, bar) : half.append(bar, val);
-            return half;
-        }
-
-        function toggleDetail(key) {
-            const list = document.getElementById('pyramid');
-            const open = list.querySelector('.detail-item');
-            if (open) open.remove();
-            list.querySelectorAll('.row-btn[aria-expanded="true"]').forEach(button => button.setAttribute('aria-expanded', 'false'));
-            openShowKey = openShowKey === key ? null : key;
-            const row = [...list.children].find(li => li.dataset.key === key);
-            const show = comparison.find(item => item.key === key);
-            if (!openShowKey || !row || !show) return;
-            row.after(renderDetail(show));
-            row.querySelector('.row-btn').setAttribute('aria-expanded', 'true');
-        }
-
-        function renderDetail(show) {
-            const li = el('li', 'detail-item');
-            const card = el('div', 'detail');
-
-            // Ruutu lists name the episode; say it once when every list shows the same one
-            const programs = [...new Set(Object.values(show.demos).map(entry => entry.program))];
-            const sharedEpisode = programs.length === 1 && programs[0] !== show.name ? programs[0] : null;
-
-            const top = el('div', 'detail-top');
-            const title = el('div');
-            title.append(el('h3', null, show.name),
-                el('div', 'detail-meta', sharedEpisode ? `${show.service} · Most-watched episode: ${sharedEpisode}` : show.service));
-            const hero = el('div', 'hero');
-            if (show.values['3+'] !== null) {
-                hero.append(el('span', 'hero-num', `${'3+' in show.derived ? '≈' : ''}${show.values['3+'].toLocaleString()}`),
-                    el('span', 'hero-label', 'viewers aged 3+'));
-            } else {
-                hero.append(el('span', 'hero-label', `Not in the 3+ list (${notListedText(show, '3+')} viewers)`));
-            }
-            top.append(title, hero);
-            card.appendChild(top);
-
-            if (show.split !== null) {
-                const approx = show.splitApprox ? '≈' : '';
-                const split = el('div', 'split-big');
-                const left = el('span', 'pct', approx + percent(show.split));
-                left.appendChild(el('small', null, 'under 45'));
-                const right = el('span', 'pct right', approx + percent(1 - show.split));
-                right.appendChild(el('small', null, '45 or older'));
-                split.append(left, splitTrack(show.split, 'split-track'), right);
-                card.appendChild(split);
-            } else {
-                card.appendChild(el('p', 'detail-note', 'Not enough data to split this audience by age.'));
-            }
-
-            const ranks = Object.values(show.demos).map(entry => entry.rank);
-            const bestRank = ranks.length ? Math.min(...ranks) : null;
-            const tiles = el('div', 'rank-tiles');
-            const tileClass = {'Alle 45': 'under45', '45+': 'over45'};
-            const tileLabel = {'3+': '3+ (all viewers)', 'Alle 45': 'Alle 45', '45+': '45+', '25-64': '25-64'};
-            demoOrder.forEach(demo => {
-                const entry = show.demos[demo];
-                const value = show.values[demo];
-                const tile = el('div', `rank-tile ${tileClass[demo] || ''}`);
-                tile.append(el('span', 'big', entry ? `#${entry.rank}` : '–'), el('span', 'lbl', tileLabel[demo]));
-                if (entry) {
-                    tile.appendChild(el('span', 'sub', `${entry.viewers.toLocaleString()} viewers`));
-                    if (!sharedEpisode && entry.program !== show.name) {
-                        tile.appendChild(el('span', 'episode', entry.program));
-                    }
-                    if (entry.rank === bestRank && ranks.length > 1) {
-                        tile.appendChild(el('span', 'badge', 'Best'));
-                    }
-                } else if (value !== null) {
-                    tile.appendChild(el('span', 'sub', `≈${value.toLocaleString()} viewers (${show.derived[demo]})`));
-                } else {
-                    tile.appendChild(el('span', 'sub', `Not in the list: ${notListedText(show, demo)}`));
-                }
-                tiles.appendChild(tile);
-            });
-            card.appendChild(tiles);
-
-            const notes = [];
-            if (show.share2564 !== null) {
-                notes.push(`${'3+' in show.derived ? '≈' : ''}${percent(show.share2564)} of the viewers are 25–64.`);
-            }
-            if (show.mismatch) {
-                notes.push('The 3+, Alle 45 and 45+ lists show different episodes of this show, so the split is approximate.');
-            } else if (Object.keys(show.derived).length > 0) {
-                notes.push('≈ figures are worked out from the other groups: under 45 and 45+ together make up the 3+ audience.');
-            }
-            if (notes.length) {
-                card.appendChild(el('p', 'detail-note', notes.join(' ')));
-            }
-
-            li.appendChild(card);
-            return li;
-        }
-
-        const tooltip = document.getElementById('tooltip');
-        document.addEventListener('pointerover', event => {
-            const target = event.target.closest && event.target.closest('[data-tip]');
-            if (!target) {
-                tooltip.hidden = true;
-                return;
-            }
-            tooltip.textContent = target.dataset.tip;
-            tooltip.hidden = false;
-            const rect = target.getBoundingClientRect();
-            const left = Math.min(rect.left, document.documentElement.clientWidth - tooltip.offsetWidth - 8);
-            tooltip.style.left = `${Math.max(8, left) + window.scrollX}px`;
-            tooltip.style.top = `${rect.top + window.scrollY - tooltip.offsetHeight - 6}px`;
-        });
-        document.addEventListener('scroll', () => { tooltip.hidden = true; }, {passive: true});
-
-        document.getElementById('viewList').addEventListener('click', () => setView('list'));
-        document.getElementById('viewCompare').addEventListener('click', () => setView('compare'));
-        document.querySelectorAll('#compareSort button').forEach(button => {
-            button.addEventListener('click', () => {
-                compareSort = button.dataset.sort;
-                document.querySelectorAll('#compareSort button').forEach(other =>
-                    other.setAttribute('aria-pressed', String(other === button)));
-                updateCompare();
-            });
-        });
-        document.getElementById('includeOutside').addEventListener('change', updateCompare);
-        document.getElementById('showAll').addEventListener('click', () => {
-            showAllRows = !showAllRows;
-            updateCompare();
-        });
-        document.getElementById('service').addEventListener('change', render);
-        document.getElementById('demo').addEventListener('change', updateTable);
-        document.getElementById('dateSelect').addEventListener('change', fetchData);
-        document.getElementById('dataRange').addEventListener('change', fetchData);
-
-        function downloadXLSX() {
-            if (allData.length === 0) {
-                alert('No data to download. Please wait for data to load.');
-                return;
-            }
-            const worksheet = XLSX.utils.json_to_sheet(allData);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Finnpanel Data");
-            const selectedDate = document.getElementById('dateSelect').value;
-            const dataRange = document.getElementById('dataRange').value;
-            XLSX.writeFile(workbook, `${dataRange}_Finnpanel_data_${formatDate(selectedDate)}.xlsx`);
-        }
-
-        // Initial load
-        fetchData();
-    </script>
+    <script src="assets/data.js?v=2026-11-24"></script>
+    <script src="assets/chart.js?v=2026-11-24"></script>
+    <script src="assets/lists.js?v=2026-11-24"></script>
+    <script src="assets/totaltv.js?v=2026-11-24"></script>
+    <script src="assets/title.js?v=2026-11-24"></script>
+    <script src="assets/app.js?v=2026-11-24"></script>
 </body>
 </html>

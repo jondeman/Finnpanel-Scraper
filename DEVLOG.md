@@ -5,6 +5,203 @@ and why each decision went the way it did. Newest first.
 
 ---
 
+## 2026-11-24 — Total TV, linear TV, title pages, and everything in CSV
+
+Branch `totaltv-titles`, pushed to `main`. `FPTV.py` replaces `FPGH.py` and
+collects every list as CSV under `data/`. The daily `.xlsx` files are converted
+and moved to `archive/xlsx/`. The dashboard is split into `assets/`, gains a
+Total TV tab and title pages, and reads only CSV.
+
+### Why
+
+The dashboard only showed online viewing. The brief: collect Finnpanel's Total TV
+figures (TV and online together) every day for every demo, find out whether the
+weekly broadcast lists can be combined with them, and give every programme a
+title page with all of its figures and their history, for professional use.
+
+### What Finnpanel publishes
+
+`www.finnpanel.fi` was reachable this time, so everything below was measured
+against the live site.
+
+| Source | Content | Demos | Archive |
+|---|---|---|---|
+| TotalTV `total14` | TV + online, most-watched episode per programme, top 20 per group (Yle, MTV, Sanoma) | 3+, Alle 45, 45+, 25–64 | **None** |
+| Online `online14`/`online90` | Already collected by `FPGH.py` | same four | none (ours since 2024-09-02) |
+| Weekly `top100`, `top50p`, channel `top` | One row per airing: channel, day, time, reach, average viewers | 3+ only | **10 weeks** |
+| Monthly `ohjika` | Top 20 airings per age group | 4+, 4–9, 10–24, 25–44, 45–64, 65+, by sex | back to 2024 at least |
+
+- **Only `total14` exists.** `total7`, `total28` and `total90` answer 200 with
+  the online-90 page. Finnpanel serves unknown or expired reports as ordinary
+  pages ("Valittua raporttia ei ole saatavilla", or another report), so the
+  scraper checks each page's own header before trusting it.
+- **The online and TotalTV windows are the same 14 days** (9.–22.11.2026 for
+  both on 24.11.), ending two days before the list date.
+- **Weekly lists gain a 7-day figure** ("7 vrk:n aikana") once the week is a week
+  old; the newest week has same-day viewing only. Columns differ between lists
+  and weeks (some have `Kanava`, some the 7-day column), so they are read by
+  header text.
+- **Weekly lists cut names at 40 characters**, TotalTV and online at 50. The top
+  100 calls TV5 "TV Viisi".
+- The channel lists cover 16 channels × 20 airings. The top 100 alone is mostly
+  Yle TV1 and MTV3 news.
+
+### Can the broadcast lists be combined with Total TV?
+
+Not into one ranked list: they count different things. A weekly row is one
+airing's linear audience, measured in the week it aired, for 3+ only. A TotalTV row
+is a programme's best episode over a rolling 14 days, on TV and online, in four
+demos. Per title they combine well. Measured on the 9.–22.11. window (weeks 46–47):
+
+| Check | Result |
+|---|---|
+| TotalTV 3+ titles with a linear airing in the same window | **55/60**. The misses are online-led (Pirunpeli, Linna, Bachelor Suomi) or below the channel cut-off |
+| TotalTV ÷ best single airing (7-day) | median **1.40**, quartiles 1.03–2.31; news and weather ≈1.0, drama and reality 2–3×, *IS esittää* 8.6× |
+| Online share (online-14 ÷ TotalTV, same window) | 34/60 in both lists; median **12%**, range 3–100% (Syke was online-only) |
+| Titles the weekly lists add | 300 unique titles in two weeks, **231 not in any TotalTV list**, 89 of them on channels with no TotalTV list (TV5, Kutonen, Frii, TLC, NatGeo, STAR) |
+| TotalTV Alle 45 + 45+ vs 3+ | 40 titles in all three: −1k…+54k, median +0.5k. They add up unless the lists name different episodes |
+
+So the dashboard combines the sources per title, not as one ranking. The Total
+TV view splits each bar into its online part and the rest, and the title page
+plots all three sources on one axis.
+
+### Storage: is GitHub safe, and is this economical?
+
+Measured by replaying the 49 days since 2026-10-07 as daily commits in a fresh
+repository, then `git gc --aggressive`:
+
+| | Git growth, 49 days | Per year |
+|---|---|---|
+| Two `.xlsx` a day (until now) | 1.37 MiB | ≈10 MiB |
+| One appended CSV file (now) | 0.43 MiB including the base file | ≈1–3 MiB |
+
+The repository was 11 MiB packed (GitHub reports 11.6 MB). GitHub's guidance is
+under 1 GB, so storage was never at risk: even `.xlsx` alone would take about 75
+years to get there. But `.xlsx` is the least economical format (zipped, so git
+cannot delta it: about 4× CSV), and the root folder had 1,625 files, growing by
+730 a year, past the 1,000 that GitHub's file browser lists. Hence the switch
+to CSV only.
+
+### Design
+
+**One collector, `FPTV.py`, CSV only.** It replaces `FPGH.py` and its upload
+through the GitHub Contents API (one commit per file). It writes plain files,
+and the workflow commits them in one commit a day. It runs locally without
+credentials and needs only `requests` and `beautifulsoup4` (pandas, numpy,
+openpyxl and PyGithub dropped). Online, Total TV and weekly lists are
+independent steps. Each writes what it got, and the script exits non-zero after
+writing if anything failed. The workflow commits even after a failure, so partial
+data is kept and the run still goes red.
+
+- `data/online/<YYYY-MM>.csv`: online top lists, 14 and 90 days, four demos,
+  480 rows a day. New rows add `ServiceRank` (Finnpanel's rank within the
+  service), `PeriodStart`, `PeriodEnd` and `Population`, and keep the episode.
+  `Rank` is still across the three services within a demo.
+- `data/totaltv/<YYYY-MM>.csv`: 240 rows a day (3 groups × 4 demos × 20), same
+  shape with `Group` and `GroupRank`.
+- `data/tv/<YYYY>.csv`: one row per airing, merged from the top 100, the top 50
+  and every channel's top 20, with `Viewers7d` filled in when published. Each day
+  the script fetches weeks it lacks and weeks still waiting for their 7-day
+  figure. A quiet day costs one request.
+- `data/manifest.json`: which files exist and what they cover.
+
+**Monthly files** keep a day's list small for the dashboard (the current month
+of online lists is 98 KB gzipped, instead of a whole year growing towards
+1.2 MB), while a title page reads all of them at once (≈0.8 MB gzipped today).
+A rerun on the same day replaces that day's rows.
+
+**The `.xlsx` archive** moved to `archive/xlsx/` with `git mv` (1,625 renames,
+contents identical by md5) and was converted by `archive/convert_xlsx.py`. The
+three `finnpanel_data_*` files from before the 14D/90D split are 14D: the
+scraper of the time fetched only `online14/3plus` (commit `976adc7`).
+
+**Dashboard.** Tabs for Online services and Total TV, and a title search. The
+Total TV tab has three views. *TV + online* is a bar per programme, split into
+the online part (same programme in the online list for the same 14 days) and the
+rest, sortable by total, online and online share. *List* adds online viewers,
+share and best linear airing. *Compare demos* is the existing butterfly on
+TotalTV data. Every programme name links to its title page (`#/title/<key>`).
+A date without a list shows the newest list before it, and says so. The start
+date is the newest list (it was yesterday). The download buttons still produce
+`.xlsx`, built in the browser.
+
+**Title page.** A headline figure and up to four stat tiles. Then: average
+viewers over time (Total TV line, online line with a 14/90-day switch, linear
+airings as dots); under 45 vs 45+ over time; the latest demo card per source
+(the Compare demos card reused); every linear airing; the most-watched episodes;
+and every row with an xlsx download. Demo and range controls scope the whole
+page.
+
+### Decisions worth recording
+
+**Titles are matched on the first 40 characters of a normalised name.** Ruutu's
+`- Kausi N - Jakso M date` tail, age ratings like `(12)` and case are removed.
+40 is where the weekly lists cut names. Linear airings must also be on one of
+the group's channels to count toward a TotalTV row.
+
+**Lines break when a programme leaves a list** (gap over two days) rather than
+bridging, and list figures are plotted at their window's last day so they line up
+with airing dates. Archive rows have no window; theirs is the 14 or 90 days
+ending two days before the list date, as the headers showed on 2026-08-21 and
+2026-11-24.
+
+**Archive rows have no `ServiceRank` in the CSV.** The dashboard works it out as
+the row's position by viewers within its service's list (ties share a rank)
+rather than writing a derived value into the data.
+
+**Colours.** Under 45 / 45+ keep blue and orange. The sources take violet
+`#6250d6` (Total TV), aqua `#1baf7a` (online) and yellow `#eda100` (linear),
+validated as a set: all-pairs CVD ΔE 9.1, normal-vision 22.9. A fourth hue for
+online 90 days fell to CVD ΔE 6.1, so 90 days is a switch instead. Aqua and
+yellow are under 3:1 on white, so lines carry end labels and every value is in a
+table.
+
+**Online episode titles were never saved.** `FPGH.py` read the episode only if
+`len(cols) > 5`, but rows have five cells. `FPTV.py` reads the `Jakso` cell; on
+the first run 233 of 480 online rows had an episode.
+
+**Ties.** `FPGH.py` ranked with pandas' unstable sort, so tied programmes came
+in arbitrary order. `FPTV.py` breaks ties by the service's own rank. On
+2026-11-24 a fresh scrape matched that morning's `.xlsx` on every viewer figure;
+95 rows differed only in the order of ties.
+
+### Verification
+
+| Check | Result |
+|---|---|
+| Archive conversion | 1,625 `.xlsx`, 115,128 rows, 28 monthly files; every file re-read with pandas and compared row by row: 0 mismatches, no CSV day without a source file |
+| Fresh online scrape vs that morning's `.xlsx` | Same 480 programmes and viewers; ties ordered by service rank |
+| `FPTV.py` run on Python 3.10 with only `requests` + `beautifulsoup4` | Online 480 rows, Total TV 240 rows, weekly lists up to date (weeks 38–47, 2,955 airings, 7-day figure on all but the newest) |
+| Second run | Only the manifest timestamp changes |
+| `tests/test_fptv.py` | 9/9 on Python 3.13 and 3.10 |
+| Browser test (Chromium, local data) | Both tabs, all views, filters, search (1,792 titles), six title pages including a linear-only one (Jeopardy! Suomi), crosshair tooltip, demo and range switches, back link; a missing day falls back to the day before; no `.xlsx` requested; console clean |
+| Phone width (390px) | No sideways scroll on Total TV, title page or online list |
+| Title page speed | 144 ms to parse and index all history; 16 ms to switch titles |
+
+### Follow-ups
+
+- [ ] Check the first scheduled run (01:00 UTC): it is the first to run `FPTV.py`
+      in Actions and commit `data/` from the workflow.
+- [ ] Monthly age-group lists (`ohjika`): linear demos (10–24, 25–44, 45–64, 65+,
+      by sex) with exact dates and ratings, archived back to 2024. Not collected
+      yet; they would add a linear demo panel to title pages.
+- [ ] `enhancements` (v2) is superseded: CSV storage, one commit a day, no API
+      writes and the episode fix are all in `main` now. Close it.
+
+### Known limitations
+
+- Total TV history starts 2026-11-24; linear airings 2026-09-14 (week 38).
+- Linear airings are 3+ only, and only airings in some top list are known.
+- Online share compares each list's own most-watched episode; ≈ marks a known
+  different episode, but Yle lists name no episodes, so some differences go
+  unseen.
+- Linear figures in the newest week are same-day; earlier weeks are 7-day.
+- Titles that change name between seasons appear as separate titles.
+- Anything that read the daily `.xlsx` straight from the repository stops at
+  2026-11-24; the old files are under `archive/xlsx/`.
+
+---
+
 ## 2026-10-08 — Compare demos: highlight cards removed
 
 Dashboard only. The four highlight cards at the top of Compare demos weren't

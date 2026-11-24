@@ -1,0 +1,63 @@
+{
+  "updated": "2026-11-24T14:13:35",
+  "online": {
+    "files": [
+      "data/online/2024-08.csv",
+      "data/online/2024-09.csv",
+      "data/online/2024-10.csv",
+      "data/online/2024-11.csv",
+      "data/online/2024-12.csv",
+      "data/online/2025-01.csv",
+      "data/online/2025-02.csv",
+      "data/online/2025-03.csv",
+      "data/online/2025-04.csv",
+      "data/online/2025-05.csv",
+      "data/online/2025-06.csv",
+      "data/online/2025-07.csv",
+      "data/online/2025-08.csv",
+      "data/online/2025-09.csv",
+      "data/online/2025-10.csv",
+      "data/online/2025-11.csv",
+      "data/online/2025-12.csv",
+      "data/online/2026-01.csv",
+      "data/online/2026-02.csv",
+      "data/online/2026-03.csv",
+      "data/online/2026-04.csv",
+      "data/online/2026-05.csv",
+      "data/online/2026-06.csv",
+      "data/online/2026-07.csv",
+      "data/online/2026-08.csv",
+      "data/online/2026-09.csv",
+      "data/online/2026-10.csv",
+      "data/online/2026-11.csv"
+    ],
+    "first": "2024-08-30",
+    "last": "2026-11-24"
+  },
+  "totaltv": {
+    "files": [
+      "data/totaltv/2026-11.csv"
+    ],
+    "first": "2026-11-24",
+    "last": "2026-11-24"
+  },
+  "tv": {
+    "files": [
+      "data/tv/2026.csv"
+    ],
+    "first": "2026-09-14",
+    "last": "2026-11-22",
+    "weeks": [
+      "2026-W38",
+      "2026-W39",
+      "2026-W40",
+      "2026-W41",
+      "2026-W42",
+      "2026-W43",
+      "2026-W44",
+      "2026-W45",
+      "2026-W46",
+      "2026-W47"
+    ]
+  }
+}
