@@ -1,4 +1,4 @@
-// The list views shared by the Total TV and Verkkopalvelut tabs: the table and the demo comparison
+// The list views shared by the Total TV and Online tabs: the table and the demo comparison
 // (the top list is in toplist.js). All read state.rows, one day's list in a common shape:
 // {Date, Period, Demo, Rank, Service, Program, Episode, Duration, Viewers}. Total TV rows also carry
 // GroupRank, PeriodStart, PeriodEnd and, once enriched (toplist.js), their online and linear figures.
@@ -42,8 +42,8 @@ function updateTable() {
     const rows = state.rows.filter(row => row.Demo === demo && inService(row.Service));
     const totaltv = state.source === 'totaltv';
     const columns = totaltv
-        ? [['Sija', 'num'], ['Mediatalo', ''], ['Ohjelma', ''], ['Jakso', ''], ['Kesto', ''], ['Katsojia', 'num'],
-            ['Verkossa samana aikana', 'num'], ['Verkon osuus', 'num'], ['Paras tv-lähetys', '']]
+        ? [['Sija', 'num'], ['Kanava', ''], ['Ohjelma', ''], ['Jakso', ''], ['Kesto', ''], ['Katsojia', 'num'],
+            ['Online samana aikana', 'num'], ['Online-osuus', 'num'], ['Paras tv-lähetys', '']]
         : [['Sija', 'num'], ['Palvelu', ''], ['Ohjelma', ''], ['Jakso', ''], ['Kesto', ''], ['Katsojia', 'num']];
 
     const head = document.getElementById('tableHead');

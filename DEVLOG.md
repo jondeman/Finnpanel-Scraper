@@ -8,13 +8,18 @@ and why each decision went the way it did. Newest first.
 ## 2026-11-24 — Usability round: Finnish, one structure, visible choices
 
 Dashboard only. A walk-through as a first-time user found seven points of
-friction; each is fixed below.
+friction; each is fixed below. The online source is called **Online** in the
+interface (not "verkkopalvelut"). Total TV's filter is **Kanava**, and the
+group Finnpanel labels Sanoma is shown as **Nelonen** (the data files keep
+Finnpanel's label; the dashboard renames it when it reads them). The Total TV
+tab is subtitled "Yle, MTV, Nelonen" rather than restating that it is TV and
+online.
 
 | Friction | Change |
 |---|---|
 | Finnish subtitle, English everything else | All text in Finnish with Finnpanel's own terms (kohderyhmä, keskikatsojamäärä, tavoittavuus); numbers the Finnish way (1 023 000, 7 %, 1,02 milj.) |
 | The two tabs worked differently (online opened on a table, Total TV on a chart) | Both tabs have the same three views: **Kärkilista**, **Kohderyhmät**, **Taulukko**. Total TV is the start page |
-| One crowded row of dropdowns; the demo dropdown disappeared in some views; "Download Data" was the loudest button | Labelled button groups (Mediatalo/Palvelu, Kohderyhmä, Ajanjakso), so every option is visible. A choice that does not apply stays on screen, disabled, with the reason as a tooltip (Total TV has no 90-day list; Kohderyhmät shows all groups). Download is a quiet button beside the list's period |
+| One crowded row of dropdowns; the demo dropdown disappeared in some views; "Download Data" was the loudest button | Labelled button groups (Kanava/Palvelu, Kohderyhmä, Ajanjakso), so every option is visible. A choice that does not apply stays on screen, disabled, with the reason as a tooltip (Total TV has no 90-day list; Kohderyhmät shows all groups). Download is a quiet button beside the list's period |
 | Dates only through a calendar, with no sense of what exists | ‹ › day stepper and a "Siirry uusimpaan" button; the period line says whether the list is the newest |
 | Programme names did not look clickable | Whole rows open the title page (top list and table), with hover and keyboard focus; each view's one-line help says so |
 | Search only on an exact name | Suggestions while typing: name, where it was seen and when it was last listed; arrow keys and Enter |

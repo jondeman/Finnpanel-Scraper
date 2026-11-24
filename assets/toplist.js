@@ -63,8 +63,8 @@ function enrichTotalTv(rows, onlineRows, broadcasts) {
 
 const TOP_EXPLAIN = {
     totaltv: [
-        'Total TV on Finnpanelin luku ohjelman katsotuimman jakson keskikatsojamäärästä 14 päivän ajalta, tv:ssä ja verkossa yhteensä. Sija on Ylen, MTV:n ja Sanoman yhteisellä listalla; mediatalon oma sija on rivin alla.',
-        'Turkoosi osa on sama ohjelma verkkopalveluiden 14 päivän listalla samalta ajalta (Yle Areena, MTV Katsomo, Ruutu). Kumpikin lista kertoo oman katsotuimman jaksonsa, joten verkon osuus on likimääräinen; ≈ merkitsee tiedossa olevaa eri jaksoa. Jos ohjelma ei ole verkon kärki-20:ssä, sitä on katsottu verkossa enintään listan 20. sijan verran.',
+        'Total TV on Finnpanelin luku ohjelman katsotuimman jakson keskikatsojamäärästä 14 päivän ajalta, tv:ssä ja verkossa yhteensä. Sija on Ylen, MTV:n ja Nelosen yhteisellä listalla; kanavan oma sija on rivin alla.',
+        'Turkoosi osa on sama ohjelma Online-listalla samoilta 14 päivältä (Yle Areena, MTV Katsomo, Ruutu). Kumpikin lista kertoo oman katsotuimman jaksonsa, joten Online-osuus on likimääräinen; ≈ merkitsee tiedossa olevaa eri jaksoa. Jos ohjelma ei ole Online-listan kärki-20:ssä, sen online-katsojamäärä on enintään listan 20. sijan verran.',
         'Vie hiiri palkin päälle nähdäksesi ohjelman parhaan tv-lähetyksen samalta ajalta.',
     ],
     online: [
@@ -88,7 +88,7 @@ function updateTopList() {
     const summary = document.getElementById('tvSummary');
     const shares = rows.filter(row => row.onlineShare !== null && row.onlineShare !== undefined).map(row => row.onlineShare).sort((a, b) => a - b);
     summary.textContent = totaltv && shares.length
-        ? `Verkon osuus katsojista on mediaaniltaan ${percent(shares[Math.floor(shares.length / 2)])} (${shares.length} ohjelmaa molemmilla listoilla).`
+        ? `Online-osuus katsojista on mediaaniltaan ${percent(shares[Math.floor(shares.length / 2)])} (${shares.length} ohjelmaa molemmilla listoilla).`
         : '';
     summary.hidden = !summary.textContent;
 
@@ -122,7 +122,7 @@ function renderTopRow(row, scale, index, totaltv) {
     const total = Number(row.Viewers);
     const ownRank = row.GroupRank || row.ServiceRank;
     const pos = el('span', 'pos', String(row.Rank));
-    pos.dataset.tip = `${row.Rank}. kaikkien kolmen ${totaltv ? 'mediatalon' : 'palvelun'} yhteisellä listalla`;
+    pos.dataset.tip = `${row.Rank}. kaikkien kolmen ${totaltv ? 'kanavan' : 'palvelun'} yhteisellä listalla`;
 
     const meta = [`${genitive(row.Service)} listalla ${ownRank}.`];
     const episode = row.Episode || (ruutuEpisode(row.Program) ? episodeLabel(ruutuEpisode(row.Program)) : '');
@@ -149,17 +149,17 @@ function renderTopRow(row, scale, index, totaltv) {
     label.appendChild(el('strong', null, fullNumber(total)));
     if (totaltv) {
         const share = row.onlineShare !== null && row.onlineShare !== undefined
-            ? `${row.onlineShareApprox ? '≈' : ''}${percent(row.onlineShare)} verkossa`
-            : row.onlineCeiling ? `verkossa ≤${thousands(row.onlineCeiling)}` : '';
+            ? `${row.onlineShareApprox ? '≈' : ''}${percent(row.onlineShare)} online`
+            : row.onlineCeiling ? `online ≤${thousands(row.onlineCeiling)}` : '';
         if (share) label.appendChild(el('span', 'share', share));
     }
     area.append(bar, label);
 
-    const tip = [`${totaltv ? 'Tv + verkko' : 'Verkossa'}: ${fullNumber(total)} katsojaa`];
+    const tip = [`${totaltv ? 'Total TV' : 'Online'}: ${fullNumber(total)} katsojaa`];
     if (totaltv && row.online) {
-        tip.push(`verkossa ${fullNumber(row.online.viewers)} (${genitive(row.online.service)} listalla ${row.online.rank}.${row.onlineShareApprox ? ', eri jakso' : ''})`);
+        tip.push(`online ${fullNumber(row.online.viewers)} (${genitive(row.online.service)} listalla ${row.online.rank}.${row.onlineShareApprox ? ', eri jakso' : ''})`);
     } else if (totaltv && row.onlineCeiling) {
-        tip.push(`ei verkon kärki-20:ssä, verkossa enintään ${fullNumber(row.onlineCeiling)}`);
+        tip.push(`ei Online-listan kärki-20:ssä, online enintään ${fullNumber(row.onlineCeiling)}`);
     }
     if (totaltv && row.bestAiring) {
         tip.push(`paras tv-lähetys ${airingText(row.bestAiring)} (${row.bestAiring.Viewers7d ? '7 vrk' : 'sama päivä'})`);

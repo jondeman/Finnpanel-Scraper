@@ -42,7 +42,7 @@ jobs:
         echo "Dashboard: https://jondeman.github.io/Finnpanel-Scraper/" >> README.md
         echo "" >> README.md
         echo "## Tiedostot" >> README.md
-        echo "- data/online/$(date -u +%Y-%m).csv: verkkopalveluiden listat (Yle Areena, MTV Katsomo, Ruutu), 14 ja 90 päivää, 2.9.2024 alkaen" >> README.md
+        echo "- data/online/$(date -u +%Y-%m).csv: Online-listat (Yle Areena, MTV Katsomo, Ruutu), 14 ja 90 päivää, 30.8.2024 alkaen" >> README.md
         echo "- data/totaltv/$(date -u +%Y-%m).csv: Total TV (tv + verkko), 14 päivää, 24.11.2026 alkaen" >> README.md
         echo "- data/tv/$(date -u +%Y).csv: viikoittaiset tv-lähetykset (top 100, top 50, kanavien top 20), viikosta 38/2026" >> README.md
         echo "- archive/xlsx/: vanhat päivittäiset .xlsx-tiedostot 2024-08-30 – 2026-11-24 (sama data on data/online/-kansiossa)" >> README.md

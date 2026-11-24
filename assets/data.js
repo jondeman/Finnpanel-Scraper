@@ -18,13 +18,16 @@ const DEMO_SHORT = {'3+': '3+', 'Alle 45': 'Alle 45', '45+': '45+', '25-64': '25
 const GROUPS = {
     yle: {group: 'Yle', online: 'Yle Areena'},
     mtv: {group: 'MTV', online: 'MTV Katsomo'},
-    sanoma: {group: 'Sanoma', online: 'Ruutu'},
+    sanoma: {group: 'Nelonen', online: 'Ruutu'},
 };
 const GROUP_KEY_BY_NAME = {};
 Object.entries(GROUPS).forEach(([key, names]) => {
     GROUP_KEY_BY_NAME[names.group] = key;
     GROUP_KEY_BY_NAME[names.online] = key;
 });
+// The data keeps Finnpanel's own label, Sanoma; the dashboard calls the group by its channel, Nelonen
+const GROUP_DISPLAY = {Sanoma: 'Nelonen'};
+GROUP_KEY_BY_NAME.Sanoma = 'sanoma';
 
 function groupKeyOf(name) {
     return GROUP_KEY_BY_NAME[name] || '';
@@ -32,7 +35,7 @@ function groupKeyOf(name) {
 
 // "Ruudun listalla", "MTV:n listalla": Finnish genitives of the services and groups
 const GENITIVES = {
-    'Yle': 'Ylen', 'MTV': 'MTV:n', 'Sanoma': 'Sanoman',
+    'Yle': 'Ylen', 'MTV': 'MTV:n', 'Nelonen': 'Nelosen', 'Sanoma': 'Sanoman',
     'Yle Areena': 'Yle Areenan', 'MTV Katsomo': 'MTV Katsomon', 'Ruutu': 'Ruudun',
 };
 
@@ -157,6 +160,9 @@ function loadFile(folder, file) {
 }
 
 function prepareRows(folder, rows) {
+    if (folder === 'totaltv' || folder === 'tv') {
+        rows.forEach(row => { row.Group = GROUP_DISPLAY[row.Group] || row.Group; });
+    }
     if (folder === 'totaltv') {
         rows.forEach(row => {
             row.Service = row.Group;

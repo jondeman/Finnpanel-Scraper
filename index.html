@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finnpanel Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="assets/dashboard.css?v=2026-11-24c">
+    <link rel="stylesheet" href="assets/dashboard.css?v=2026-11-24d">
 </head>
 <body>
     <header class="topbar">
         <div>
             <h1><a href="#/totaltv">Finnpanel Dashboard</a></h1>
-            <div class="subtitle" id="subtitle">Ylen, MTV:n ja Sanoman katsotuimmat ohjelmat</div>
+            <div class="subtitle" id="subtitle">Ylen, MTV:n ja Nelosen katsotuimmat ohjelmat</div>
         </div>
         <div class="search" role="search">
             <label for="titleSearch" class="filter-label">Hae ohjelman historia</label>
@@ -22,8 +22,8 @@
     </header>
 
     <nav class="tabs" aria-label="Tietolähde">
-        <a href="#/totaltv" data-source="totaltv" aria-current="true">Total TV <span class="tab-sub">tv + verkko</span></a>
-        <a href="#/online" data-source="online" aria-current="false">Verkkopalvelut <span class="tab-sub">Areena, Katsomo, Ruutu</span></a>
+        <a href="#/totaltv" data-source="totaltv" aria-current="true">Total TV <span class="tab-sub">Yle, MTV, Nelonen</span></a>
+        <a href="#/online" data-source="online" aria-current="false">Online <span class="tab-sub">Areena, Katsomo, Ruutu</span></a>
     </nav>
 
     <main>
@@ -58,7 +58,7 @@
                     </div>
                 </div>
                 <div class="filter">
-                    <span class="filter-label" id="serviceLabel">Mediatalo</span>
+                    <span class="filter-label" id="serviceLabel">Kanava</span>
                     <div class="segmented" id="serviceSwitch" role="group" aria-labelledby="serviceLabel"></div>
                 </div>
                 <div class="filter">
@@ -81,11 +81,11 @@
                         <span class="toolbar-label">Järjestys</span>
                         <div class="segmented" id="tvSort" role="group" aria-label="Järjestys">
                             <button type="button" data-sort="total" aria-pressed="true">Katsojat</button>
-                            <button type="button" data-sort="online" aria-pressed="false">Verkossa katsoneet</button>
-                            <button type="button" data-sort="share" aria-pressed="false">Verkon osuus</button>
+                            <button type="button" data-sort="online" aria-pressed="false">Online-katsojat</button>
+                            <button type="button" data-sort="share" aria-pressed="false">Online-osuus</button>
                         </div>
                         <div class="tv-legend" id="topLegend" aria-hidden="true">
-                            <span><i class="key seg-online"></i> Verkossa (Areena, Katsomo, Ruutu)</span>
+                            <span><i class="key seg-online"></i> Online (Areena, Katsomo, Ruutu)</span>
                             <span><i class="key seg-tv"></i> Muu katselu: tv, suorana ja tallenteelta</span>
                         </div>
                     </div>
@@ -153,11 +153,11 @@
         <a class="footer-link" href="https://www.linkedin.com/in/joonakortesmaki/" target="_blank" rel="noopener">Joona Kortesmäki</a>
     </footer>
 
-    <script src="assets/data.js?v=2026-11-24c"></script>
-    <script src="assets/chart.js?v=2026-11-24c"></script>
-    <script src="assets/lists.js?v=2026-11-24c"></script>
-    <script src="assets/toplist.js?v=2026-11-24c"></script>
-    <script src="assets/title.js?v=2026-11-24c"></script>
-    <script src="assets/app.js?v=2026-11-24c"></script>
+    <script src="assets/data.js?v=2026-11-24d"></script>
+    <script src="assets/chart.js?v=2026-11-24d"></script>
+    <script src="assets/lists.js?v=2026-11-24d"></script>
+    <script src="assets/toplist.js?v=2026-11-24d"></script>
+    <script src="assets/title.js?v=2026-11-24d"></script>
+    <script src="assets/app.js?v=2026-11-24d"></script>
 </body>
 </html>

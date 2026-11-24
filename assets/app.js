@@ -5,8 +5,8 @@
 
 const SOURCE_SETTINGS = {
     totaltv: {
-        subtitle: 'Ylen, MTV:n ja Sanoman katsotuimmat ohjelmat tv:ssä ja verkossa yhteensä',
-        serviceLabel: 'Mediatalo', names: key => GROUPS[key].group,
+        subtitle: 'Ylen, MTV:n ja Nelosen katsotuimmat ohjelmat tv:ssä ja verkossa yhteensä',
+        serviceLabel: 'Kanava', names: key => GROUPS[key].group,
     },
     online: {
         subtitle: 'Yle Areenan, MTV Katsomon ja Ruudun katsotuimmat ohjelmat',
@@ -233,7 +233,7 @@ async function fetchData() {
         state.rows = rows;
         state.shownDate = shown;
         loadedKey = `${state.source}|${state.filters.period}|${state.filters.date}`;
-        const name = state.source === 'totaltv' ? 'Total TV -listoja' : 'Verkkopalveluiden listoja';
+        const name = state.source === 'totaltv' ? 'Total TV -listoja' : 'Online-listoja';
         if (!shown) {
             timeframe.textContent = '';
             setMessage(`${name} on kerätty ${finnishDate(info.first)} alkaen${state.source === 'totaltv' ? ', eikä Finnpanel julkaise niistä arkistoa' : ''}.`,
@@ -280,7 +280,7 @@ function downloadXLSX() {
         const numeric = new Set(['Rank', 'ServiceRank', 'Viewers', 'Population']);
         const rows = state.rows.map(row => Object.fromEntries(columns.map(column =>
             [column, numeric.has(column) && row[column] !== '' ? Number(row[column]) : row[column]])));
-        downloadSheets(`Verkkopalvelut_${state.filters.period}_${day}.xlsx`, [{name: 'Verkkopalvelut', rows}]);
+        downloadSheets(`Online_${state.filters.period}_${day}.xlsx`, [{name: 'Online', rows}]);
         return;
     }
     const rows = state.rows.map(row => ({

@@ -103,7 +103,7 @@ function drawTitle(page, title, history) {
         coverageItem('totaltv', 'Total TV', totaltvDates.length
             ? `${totaltvDates.length} päivän listalla` : 'ei vielä listalla',
         history.listDates.totaltv.length ? `kerätty ${finnishDate(history.listDates.totaltv[0])} alkaen` : ''),
-        coverageItem('online', 'Verkkopalvelut', onlineDates.length
+        coverageItem('online', 'Online', onlineDates.length
             ? `${onlineDates.length} päivän listalla, ${finnishDate(onlineDates[0])}–${finnishDate(onlineDates[onlineDates.length - 1])}` : 'ei listalla',
         history.listDates.online.length ? `kerätty ${finnishDate(history.listDates.online[0])} alkaen` : ''),
         coverageItem('tv', 'Tv-lähetykset', airings.length
@@ -126,7 +126,7 @@ function drawTitle(page, title, history) {
         group('Kohderyhmä', segmented(DEMO_ORDER.map(option => [option, option === '3+' ? 'Kaikki 3+' : DEMO_SHORT[option],
             demosWithData.has(option) ? null : 'Ohjelma ei ole tämän kohderyhmän listoilla']), demo, value => { titleState.demo = value; redraw(); }, 'Kohderyhmä')),
         group('Aikaväli', segmented([['90', '3 kk'], ['365', '1 vuosi'], ['all', 'Koko historia']], titleState.range, value => { titleState.range = value; redraw(); }, 'Aikaväli')),
-        group('Verkkolistan ajanjakso', segmented([['14D', '14 päivää'], ['90D', '90 päivää']], titleState.window, value => { titleState.window = value; redraw(); }, 'Verkkolistan ajanjakso')),
+        group('Online-listan ajanjakso', segmented([['14D', '14 päivää'], ['90D', '90 päivää']], titleState.window, value => { titleState.window = value; redraw(); }, 'Online-listan ajanjakso')),
     );
     page.appendChild(controls);
 
@@ -164,10 +164,10 @@ function drawTitle(page, title, history) {
     viewersCard.appendChild(chart);
     addSection(viewersCard, 'Kehitys');
     const series = [
-        {id: 'totaltv', label: 'Total TV: tv + verkko, 14 päivää', color: SOURCE_COLORS.totaltv, kind: 'line', gapDays: 2,
+        {id: 'totaltv', label: 'Total TV, 14 päivää', color: SOURCE_COLORS.totaltv, kind: 'line', gapDays: 2,
             points: totaltvByDemo.map(row => ({t: parseIso(row.PeriodEnd).getTime(), y: Number(row.Viewers),
                 lines: [`${row.Rank}. yhteisellä listalla, ${row.GroupRank}. ${genitive(row.Group)} listalla`, `ajanjakso ${windowText(row.PeriodStart, row.PeriodEnd)}`, row.Episode].filter(Boolean)}))},
-        {id: 'online', label: `Verkkopalvelut, ${windowLabel}`, color: SOURCE_COLORS.online, kind: 'line', gapDays: 2,
+        {id: 'online', label: `Online, ${windowLabel}`, color: SOURCE_COLORS.online, kind: 'line', gapDays: 2,
             points: onlineByDemo.map(row => {
                 const window = rowWindow(row);
                 const episode = ruutuEpisode(row.Program);
@@ -187,8 +187,8 @@ function drawTitle(page, title, history) {
 
     // ---- chart 2: under 45 vs 45+
     const mixCard = card('Ikäryhmät: alle 45 ja 45+',
-        'Alle 45-vuotiaat ja 45 vuotta täyttäneet ovat yhdessä kaikki katsojat. Katko tarkoittaa, ettei ohjelma ollut ryhmän kärki-20:ssä. Kohderyhmät kerätään verkkopalveluista 7.10.2026 ja Total TV:stä 24.11.2026 alkaen.');
-    const mixSources = [['totaltv', 'Total TV'], ['online', `Verkkopalvelut, ${windowLabel}`]];
+        'Alle 45-vuotiaat ja 45 vuotta täyttäneet ovat yhdessä kaikki katsojat. Katko tarkoittaa, ettei ohjelma ollut ryhmän kärki-20:ssä. Kohderyhmät kerätään Online-listoista 7.10.2026 ja Total TV:stä 24.11.2026 alkaen.');
+    const mixSources = [['totaltv', 'Total TV'], ['online', `Online, ${windowLabel}`]];
     if (!titleState.mix) {
         // Open on whichever source has more demo history for this title
         const demoDays = rows => new Set(rows.filter(row => row.Demo === 'Alle 45' || row.Demo === '45+').map(row => row.Date)).size;
@@ -223,7 +223,7 @@ function drawTitle(page, title, history) {
     const latestOnline = latestComparison(history.online.filter(row => row.Period === '14D'), title.key, demoOnlineDates);
     if (latestOnline) {
         const window = rowWindow(latestOnline.rows[0]);
-        breakdown.appendChild(renderDetail(latestOnline.show, {heading: `Verkkopalvelut, ${windowText(window.start, window.end)}`}));
+        breakdown.appendChild(renderDetail(latestOnline.show, {heading: `Online, ${windowText(window.start, window.end)}`}));
     }
     if (breakdown.children.length) {
         const breakdownCard = card('Kohderyhmät viimeisimmällä listalla', 'Tuorein lista, jolla ohjelma on. Sija on kaikkien kolmen yhteisellä listalla; tumma sija = kärkikymmenikkö.');
@@ -246,7 +246,7 @@ function drawTitle(page, title, history) {
     // ---- episodes
     const episodes = episodeRows(title);
     if (episodes.length) {
-        const episodesCard = card('Katsotuimmat jaksot', 'Listoilla nimetyt jaksot ja kunkin paras luku kaikista katsojista (3+). Verkkopalveluiden jaksonimet kerätään 24.11.2026 alkaen; Ruudun nimissä kausi ja jakso ovat mukana.');
+        const episodesCard = card('Katsotuimmat jaksot', 'Listoilla nimetyt jaksot ja kunkin paras luku kaikista katsojista (3+). Online-listojen jaksonimet kerätään 24.11.2026 alkaen; Ruudun nimissä kausi ja jakso ovat mukana.');
         episodesCard.appendChild(table(['Jakso', 'Lähde', 'Paras', 'Listoilla'],
             episodes.map(item => [item.episode, item.source, fullNumber(item.best), item.first === item.last ? finnishDate(item.first) : `${finnishDate(item.first)}–${finnishDate(item.last)}`]),
             'episodes', 15));
@@ -312,17 +312,17 @@ function renderHeadline(title, history, totaltvByDemo, onlineByDemo, airings) {
     if (lastTotal) {
         hero.append(el('span', 'hero-num', fullNumber(lastTotal.Viewers)),
             el('span', 'hero-label', `katsojaa tv:ssä ja verkossa, ${windowText(lastTotal.PeriodStart, lastTotal.PeriodEnd)} (${DEMO_SHORT[demo]})`),
-            el('span', 'hero-sub', `${lastTotal.Rank}. Ylen, MTV:n ja Sanoman yhteisellä listalla · ${lastTotal.GroupRank}. ${genitive(lastTotal.Group)} listalla${lastTotal.Date !== latestTotalDate ? ` · viimeksi listalla ${finnishDate(lastTotal.Date)}` : ''}`));
+            el('span', 'hero-sub', `${lastTotal.Rank}. Ylen, MTV:n ja Nelosen yhteisellä listalla · ${lastTotal.GroupRank}. ${genitive(lastTotal.Group)} listalla${lastTotal.Date !== latestTotalDate ? ` · viimeksi listalla ${finnishDate(lastTotal.Date)}` : ''}`));
     } else if (lastOnline) {
         const window = rowWindow(lastOnline);
         hero.append(el('span', 'hero-num', fullNumber(lastOnline.Viewers)),
-            el('span', 'hero-label', `katsojaa verkossa, ${windowText(window.start, window.end)} (${DEMO_SHORT[demo]})`),
+            el('span', 'hero-label', `katsojaa online, ${windowText(window.start, window.end)} (${DEMO_SHORT[demo]})`),
             el('span', 'hero-sub', `${lastOnline.ServiceRank}. ${genitive(lastOnline.Service)} listalla${lastOnline.Date !== latestOnlineDate ? ` · viimeksi listalla ${finnishDate(lastOnline.Date)}` : ''} · ei Total TV -listalla`));
     } else if (airings.length) {
         const best = airings.reduce((a, b) => airingValue(b) > airingValue(a) ? b : a);
         hero.append(el('span', 'hero-num', fullNumber(airingValue(best))),
             el('span', 'hero-label', 'katsojaa parhaassa tv-lähetyksessä (3+)'),
-            el('span', 'hero-sub', `${best.Channel} ${WEEKDAY_NAMES[best.Weekday]} ${finnishDate(best.Date)} klo ${best.Time} · ei verkon eikä Total TV:n kärki-20:ssä`));
+            el('span', 'hero-sub', `${best.Channel} ${WEEKDAY_NAMES[best.Weekday]} ${finnishDate(best.Date)} klo ${best.Time} · ei Online- eikä Total TV -listojen kärki-20:ssä`));
     } else {
         hero.append(el('span', 'hero-label', `Ei kohderyhmän ${DEMO_SHORT[demo]} listoilla.`));
     }
@@ -332,17 +332,17 @@ function renderHeadline(title, history, totaltvByDemo, onlineByDemo, airings) {
     if (lastOnline && lastTotal) {
         const sameWindow = byDateBest(title.online.filter(row => row.Period === '14D' && row.Demo === demo))
             .find(row => row.Date === lastTotal.Date);
-        tiles.appendChild(statTile('Verkossa samana aikana',
+        tiles.appendChild(statTile('Online samana aikana',
             sameWindow ? fullNumber(sameWindow.Viewers) : '–',
-            sameWindow ? `${percent(Math.min(sameWindow.Viewers / lastTotal.Viewers, 1))} Total TV:stä · ${sameWindow.ServiceRank}. ${genitive(sameWindow.Service)} listalla` : 'ei verkon kärki-20:ssä samana päivänä'));
+            sameWindow ? `${percent(Math.min(sameWindow.Viewers / lastTotal.Viewers, 1))} Total TV:stä · ${sameWindow.ServiceRank}. ${genitive(sameWindow.Service)} listalla` : 'ei Online-listan kärki-20:ssä samana päivänä'));
     } else if (lastOnline) {
-        tiles.appendChild(statTile(`Verkossa, ${windowDays} päivää`, fullNumber(lastOnline.Viewers),
+        tiles.appendChild(statTile(`Online, ${windowDays} päivää`, fullNumber(lastOnline.Viewers),
             `${lastOnline.ServiceRank}. ${genitive(lastOnline.Service)} listalla ${finnishDate(lastOnline.Date)}`));
     }
     if (onlineByDemo.length) {
         const peak = onlineByDemo.reduce((a, b) => Number(b.Viewers) > Number(a.Viewers) ? b : a);
         const window = rowWindow(peak);
-        tiles.appendChild(statTile(`Verkon huippu, ${windowDays} päivää`, fullNumber(peak.Viewers),
+        tiles.appendChild(statTile(`Online-huippu, ${windowDays} päivää`, fullNumber(peak.Viewers),
             `ajanjakso ${windowText(window.start, window.end)}`));
     }
     if (airings.length) {
@@ -440,14 +440,14 @@ function renderDataCard(title) {
     download.type = 'button';
     download.addEventListener('click', () => downloadSheets(`${title.name.replace(/[\\/:*?"<>|]/g, '')}_Finnpanel.xlsx`, [
         {name: 'Total TV', rows: title.totaltv.map(({Service, Period, ...row}) => row)},
-        {name: 'Verkkopalvelut', rows: title.online},
+        {name: 'Online', rows: title.online},
         {name: 'Tv-lähetykset', rows: title.tv},
     ]));
     section.querySelector('.card-head').appendChild(download);
     const tabs = [
         ['tv', `Tv-lähetykset (${title.tv.length})`],
         ['totaltv', `Total TV (${title.totaltv.length})`],
-        ['online', `Verkkopalvelut (${title.online.length})`],
+        ['online', `Online (${title.online.length})`],
     ];
     const body = el('div');
     const draw = () => {
@@ -458,7 +458,7 @@ function renderDataCard(title) {
                 [...title.tv].sort((a, b) => b.Date.localeCompare(a.Date)).map(row => [`${row.Week}/${row.Year}`, finnishDate(row.Date), row.Time, row.Channel, row.Program, num(row.Reach), num(row.ViewersSameDay), num(row.Viewers7d)]),
                 'data-tv', 30));
         } else if (tab === 'totaltv') {
-            body.appendChild(table(['Lista', 'Ajanjakso', 'Kohderyhmä', 'Sija', 'Mediatalon sija', 'Ohjelma', 'Jakso', 'Katsojia'],
+            body.appendChild(table(['Lista', 'Ajanjakso', 'Kohderyhmä', 'Sija', 'Kanavan sija', 'Ohjelma', 'Jakso', 'Katsojia'],
                 [...title.totaltv].sort((a, b) => b.Date.localeCompare(a.Date) || demoSortKey(a.Demo) - demoSortKey(b.Demo)).map(row => [finnishDate(row.Date), windowText(row.PeriodStart, row.PeriodEnd), row.Demo, `${row.Rank}.`, `${row.GroupRank}. ${row.Group}`, row.Program, row.Episode, num(row.Viewers)]),
                 'data-totaltv', 30));
         } else {
