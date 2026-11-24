@@ -5,6 +5,31 @@ and why each decision went the way it did. Newest first.
 
 ---
 
+## 2026-11-24 — Figures for one series (`series_ratings.py`)
+
+A command-line report of one series' figures, for pasting into production
+records. It reads the CSVs in `data/` (from this checkout, or from
+raw.githubusercontent.com when the script is run elsewhere) and prints: the
+newest Total TV figure in every demo with the rank on the group's top 20 (or the
+group's cut-off when the series is not on the list), the online and linear
+figures for the same 14 days, ranked "mentions" ("#12 on MTV's Total TV top
+20"), a week-by-week table, and two English one-liners (on air, and season peaks
+once finished). Standard library only.
+
+- **Names** follow the dashboard's `titleKey` rules; "Name: subtitle" also
+  matches and "Tulossa:" trailers never do. `--exclude` drops look-alikes
+  (Koko Britannia leipoo, Koti koiralle UK), and `--since` (the season's start)
+  keeps earlier seasons out, since Finnpanel names carry no season.
+- **Weeks.** The Total TV list published on a Tuesday covers exactly the two
+  previous weeks Mon–Sun, so each week is paired with the 14-day lists whose
+  window ends on its Sunday. A weekly note therefore starts on Tuesdays.
+- **Channel mention** uses the most-watched airing's channel rank, not the best
+  rank anywhere: "#9 on MTV Ava's top 20" says less than "#15 on MTV3's".
+
+Tests: `tests/test_series_ratings.py`.
+
+---
+
 ## 2026-11-24 — Usability round: Finnish, one structure, visible choices
 
 Dashboard only. A walk-through as a first-time user found seven points of
