@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-25T09:43:38",
+  "updated": "2026-11-26T09:19:40",
   "online": {
     "files": [
       "data/online/2024-08.csv",
@@ -32,14 +32,14 @@
       "data/online/2026-11.csv"
     ],
     "first": "2024-08-30",
-    "last": "2026-11-25"
+    "last": "2026-11-26"
   },
   "totaltv": {
     "files": [
       "data/totaltv/2026-11.csv"
     ],
     "first": "2026-11-24",
-    "last": "2026-11-25"
+    "last": "2026-11-26"
   },
   "tv": {
     "files": [
