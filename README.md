@@ -1,6 +1,6 @@
 # Finnpanel Data
 
-Viimeisin päivitys: Thu Nov 26 09:19:40 UTC 2026
+Viimeisin päivitys: Fri Nov 27 09:34:51 UTC 2026
 
 Dashboard: https://jondeman.github.io/Finnpanel-Scraper/
 
